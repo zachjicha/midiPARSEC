@@ -1,3 +1,3 @@
 # parsec
 
-Parser and Serial Encoding Client 
+midi PARser and Serial Encoding Client 
