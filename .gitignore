@@ -1,0 +1,7 @@
+*.class
+#*.jar
+*.war
+*.ear
+*.mid
+*.txt
+*.code-workspace
