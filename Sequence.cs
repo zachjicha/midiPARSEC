@@ -27,7 +27,7 @@ namespace Parsec
             
         }
 
-        public Tuple<byte, uint, uint> getNextEvent(int track)
+        public ParsecMessage getNextEvent(int track)
         {
             return trackList.getTrack(track).dequeueEvent();
         }

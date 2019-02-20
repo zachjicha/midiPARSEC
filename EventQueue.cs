@@ -30,7 +30,7 @@ namespace Parsec
         }
 
         // Dequeue an event and return its contents as a tuple
-        public Tuple<byte, uint, uint> dequeueEvent()
+        public ParsecMessage dequeueEvent()
         {
             if(size == 0)
             {
@@ -45,7 +45,7 @@ namespace Parsec
                     end = null;
                 }
                 size--;
-                return Tuple.Create(toReturn.type, toReturn.time, toReturn.data);
+                return toReturn.message;
             }
         }
 
@@ -55,7 +55,7 @@ namespace Parsec
 
             while(current != null)
             {
-                Console.WriteLine("Type: {0}  Time: {1}  Data: {2}", current.type, current.time, current.data);
+                Console.WriteLine("Type: {0}  Time: {1}  Data: {2}", current.message.getType(), current.message.getTime(), current.message.getData());
                 current = current.next;
             }
         }
@@ -63,15 +63,11 @@ namespace Parsec
         private class EventNode 
         {
             public EventNode next;
-            public byte type;
-            public uint time;
-            public uint data;
+            public ParsecMessage message;
 
             public EventNode(byte _type, uint _time, uint _data, EventNode _next) 
             {
-                type = _type;
-                time = _time;
-                data = _data;
+                message = new ParsecMessage(_type, _time, _data);
                 next = _next;
             }
         }

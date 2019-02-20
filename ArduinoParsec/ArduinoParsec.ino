@@ -5,11 +5,38 @@ void setup() {
 
 }
 
+enum State {
+  WAITING_FOR_HANDSHAKE,
+  ACK_HANDSHAKE,
+  TRANSMITTING
+};
+byte byteBuffer[9];
+State state = WAITING_FOR_HANDSHAKE;
+
 void loop() {
   // put your main code here, to run repeatedly:
 
-  if(Serial) {
-    Serial.println('C');
+  switch(state){
+    case WAITING_FOR_HANDSHAKE:
+      
+      if(Serial.read() == 0x7F) {
+        state = ACK_HANDSHAKE;
+      }
+      
+      break;
+
+    case ACK_HANDSHAKE:
+    
+      Serial.write(0x7F);
+      if(Serial.read() == 0xAB) {
+        state = TRANSMITTING;
+      }
+
+      break;
+    case TRANSMITTING:
+      Serial.write(0x80);
+      break;
   }
+
 
 }
