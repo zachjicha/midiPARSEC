@@ -28,10 +28,11 @@ namespace Parsec
 
             int state = 0;
             byte[] nums = {0x7F, 0xAB};
+            commsPort.Write(nums, 0, 1);
 
             while(state == 0)
             {
-                commsPort.Write(nums, 0, 1);
+                
                 if(commsPort.ReadByte() == 0x7F)
                 {
                     state = 1;

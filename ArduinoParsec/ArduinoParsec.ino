@@ -8,6 +8,7 @@ void setup() {
 enum State {
   WAITING_FOR_HANDSHAKE,
   ACK_HANDSHAKE,
+  WAITING_FOR_ACK,
   TRANSMITTING
 };
 byte byteBuffer[9];
@@ -28,6 +29,10 @@ void loop() {
     case ACK_HANDSHAKE:
     
       Serial.write(0x7F);
+      state = WAITING_FOR_ACK;
+
+      break;
+    case WAITING_FOR_ACK:
       if(Serial.read() == 0xAB) {
         state = TRANSMITTING;
       }
