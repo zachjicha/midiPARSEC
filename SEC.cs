@@ -13,9 +13,6 @@ namespace Parsec
         static void Main(string[] args)
         {
 
-            Console.WriteLine( "IsLittleEndian:  {0}", 
-            BitConverter.IsLittleEndian );
-
             if(args.Length != 2)
             {
                 throw new ArgumentException("\nIncorrect arguments!\nCorrect usage: dotnet run <portname> <file>.mid");
@@ -30,43 +27,36 @@ namespace Parsec
             }
             Console.WriteLine("{0} successfully parsed!", args[1]);
             // Debug print the sequence
-            sequence.print();
-            Console.WriteLine("Opening serial comms with Arduino...");
+            //sequence.print();
+            /*Console.WriteLine("Opening serial comms with Arduino...");
             Arduino arduino = new Arduino(args[0]);
             arduino.openComms();
-            Console.WriteLine("Comms established! Ready to play...");
+            Console.WriteLine("Comms established! Ready to play...");*/
+
+            DateTime past = new DateTime(1999, 8, 30);
+            long elapsedTicks = DateTime.Now.Ticks - past.Ticks;
+            long currentMicros = elapsedTicks/10;
+
+            sequence.initializeStartTimes(currentMicros);
+
 
             while(true)
             {
-                int request = arduino.listenForRequest();
-                
+                elapsedTicks = DateTime.Now.Ticks - past.Ticks;
+                currentMicros = elapsedTicks/10;
 
-                if(request == 0xFF)
+                sequence.traverseSequence(currentMicros);
+            
+                if(sequence.getTracksLeft() == 0)
                 {
-                    Console.WriteLine("Song finished playing!");
                     break;
                 }
-                    
-
-                if(request <= 0)
-                    continue;
-
-                //Console.WriteLine("Cool Request: {0}", request);
-                //Request - 1 is the track, as the 0 request is usually nothing
-                if(request < 5) {
-                    Console.WriteLine("Track Request: {0}", request - 1);
-                    ParsecMessage message = sequence.getNextEvent(request - 1);
-                    if(message.getType() == 2) 
-                    {
-                        message = sequence.getNextEvent(request - 1);
-                    }
-                    arduino.writeParsecMessage(message);
-                    //Console.WriteLine("Sent!");
-                }
+                  
+                
                 
             }
-            Console.WriteLine("Closing comms...");
-            arduino.closeComms();
+            //Console.WriteLine("Closing comms...");
+            //arduino.closeComms();
             Console.WriteLine("Comms closed! Exiting...");
         }
     }
