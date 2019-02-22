@@ -51,9 +51,10 @@ namespace Parsec
         public void print()
         {
             TrackNode current = head;
-
+            int i = 0;
             while(current != null)
             {
+                Console.WriteLine("Track: {0}", i++);
                 current.track.print();
                 current = current.next;
             }

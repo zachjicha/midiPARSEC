@@ -30,7 +30,9 @@ namespace Parsec
         {
             message = new byte[9];
             byte[] timeBytes = BitConverter.GetBytes(_time);
+            //Console.WriteLine("Time Byte Length: {0}", timeBytes.Length);
             byte[] dataBytes = BitConverter.GetBytes(_data);
+            //Console.WriteLine("Data Byte Length: {0}", dataBytes.Length);
             message[0] = _type;
             message[1] = timeBytes[0];
             message[2] = timeBytes[1];

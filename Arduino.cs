@@ -51,6 +51,7 @@ namespace Parsec
             commsPort.Open();
             Console.WriteLine("Waiting for arduino to restart...");
             System.Threading.Thread.Sleep(5000);
+            Console.WriteLine("Shaking hands with arduino...");
             handShake();
         }
 
@@ -74,6 +75,7 @@ namespace Parsec
         public void writeParsecMessage(ParsecMessage message)
         {
             commsPort.Write(message.getMessage(), 0, 9);
+            //Console.WriteLine("Type: {0} Time:{1} Data:{2}", message.getType(), message.getTime(), message.getData());
         }
 
 
