@@ -48,7 +48,7 @@ namespace Parsec
             }
         }
 
-        public void traverseSequence(long currentTime)
+        public void traverseSequence(long currentTime, Arduino arduino)
         {
             for(int i = 0; i < numberOfTracks; i++)
             {
@@ -64,10 +64,9 @@ namespace Parsec
                     if((currentEvents[i].getEventCode() & 0xF0) == 0xB0)
                     {
                         //Tempo change event
-                        currentEvents[i].print(i);
                         if(currentEvents[i].getEventCode() == 0xB1)
-                        {
-                            microsPerTick = currentEvents[i].getData()/clocks;
+                        {   
+                            microsPerTick = currentEvents[i].getSilentData()/clocks;
                         }
 
                         currentEvents[i] = getNextEvent(i);
@@ -75,7 +74,7 @@ namespace Parsec
                     }
                     else 
                     {
-                        currentEvents[i].print(i);
+                        arduino.writeParsecMessage(currentEvents[i]);
                         if(currentEvents[i].getEventCode() != 0xAF)
                         {
                             currentEvents[i] = getNextEvent(i);
@@ -87,7 +86,6 @@ namespace Parsec
                             currentEvents[i] = null;
                         }
                     }
-                    
                 }
             }
         }
@@ -248,7 +246,7 @@ namespace Parsec
                             uint tempo = (uint)(byteArrayToUnsignedInt(bytes, eventStartIndex+3, eventStartIndex+5));
                             //int tempo = 500000;
                             eventSilentData = tempo;
-                            eventCode = 0xB2;
+                            eventCode = 0xB1;
                             //Record the length of the dt/event pair
                             //Tempo event is always 6 long
                             nextPairStartIndex = 6 + eventStartIndex;
@@ -378,9 +376,6 @@ namespace Parsec
                     //Now if we are here that means we got one of the handful of relevant events
                     //So we can add it to our track
                     currentTrack.enqueueEvent(eventDevice, eventCode, eventData, eventTime, eventSilentData);
-                    /* if(eventType == 2) {
-                        currentTrack.enqueueEvent(0, 0, 0);
-                    }*/
                     pairStartIndex = nextPairStartIndex;
                 }
                 trackStartIndex = nextPairStartIndex;

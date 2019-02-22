@@ -38,6 +38,11 @@ namespace Parsec
             return message[4];
         }
 
+        public uint getSilentData()
+        {
+            return silentData;
+        }
+
         public void print()
         {
             Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2} {4:X2}", message[0], message[1], message[2], message[3], message[4]);
@@ -52,7 +57,7 @@ namespace Parsec
         {
             time = _time;
             silentData = _silentData;
-            message = new byte[8];
+            message = new byte[5];
             message[0] = 0xAE;
             message[1] = device;
             //Byte 2 (Message Length) is handled below

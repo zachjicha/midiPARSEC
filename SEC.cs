@@ -28,10 +28,10 @@ namespace Parsec
             Console.WriteLine("{0} successfully parsed!", args[1]);
             // Debug print the sequence
             //sequence.print();
-            /*Console.WriteLine("Opening serial comms with Arduino...");
+            Console.WriteLine("Opening serial comms with Arduino...");
             Arduino arduino = new Arduino(args[0]);
             arduino.openComms();
-            Console.WriteLine("Comms established! Ready to play...");*/
+            Console.WriteLine("Comms established! Ready to play...");
 
             DateTime past = new DateTime(1999, 8, 30);
             long elapsedTicks = DateTime.Now.Ticks - past.Ticks;
@@ -39,20 +39,17 @@ namespace Parsec
 
             sequence.initializeStartTimes(currentMicros);
 
-
             while(true)
             {
                 elapsedTicks = DateTime.Now.Ticks - past.Ticks;
                 currentMicros = elapsedTicks/10;
 
-                sequence.traverseSequence(currentMicros);
-            
+                sequence.traverseSequence(currentMicros, arduino);
+             
                 if(sequence.getTracksLeft() == 0)
                 {
                     break;
                 }
-                  
-                
                 
             }
             //Console.WriteLine("Closing comms...");

@@ -13,19 +13,21 @@ namespace Parsec
         {
             front = end = null;
             size = 0;
+            enqueueEvent(0, 0, 0, 0, 0);
         }
 
         //Insert an event at the end of the queue
         public void enqueueEvent(byte device, byte code, byte data, uint time, uint silentData)
         {
+            EventNode node = new EventNode(device, code, data, time, silentData, null);
             if(size == 0)
             {
-                front = end = new EventNode(device, code, data, time, silentData, null);
+                front = end = node;
             }
             else {
-                end.next = new EventNode(device, code, data, time, silentData, null);
+                end.next = node;
                 end = end.next;
-            }
+            } 
             size++;
         }
 
