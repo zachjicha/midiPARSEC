@@ -13,19 +13,21 @@ namespace Parsec
         {
             front = end = null;
             size = 0;
+            enqueueEvent(0, 0, 0, 0, 0);
         }
 
         //Insert an event at the end of the queue
-        public void enqueueEvent(byte _type, uint _time, uint _data)
+        public void enqueueEvent(byte device, byte code, byte data, uint time, uint silentData)
         {
+            EventNode node = new EventNode(device, code, data, time, silentData, null);
             if(size == 0)
             {
-                front = end = new EventNode(_type, _time, _data, null);
+                front = end = node;
             }
             else {
-                end.next = new EventNode(_type, _time, _data, null);
+                end.next = node;
                 end = end.next;
-            }
+            } 
             size++;
         }
 
@@ -55,7 +57,7 @@ namespace Parsec
 
             while(current != null)
             {
-                Console.WriteLine("Type: {0}  Time: {1}  Data: {2}", current.message.getType(), current.message.getTime(), current.message.getData());
+                current.message.print();
                 current = current.next;
             }
         }
@@ -65,9 +67,9 @@ namespace Parsec
             public EventNode next;
             public ParsecMessage message;
 
-            public EventNode(byte _type, uint _time, uint _data, EventNode _next) 
+            public EventNode(byte device, byte code, byte data, uint _time, uint _silentData, EventNode _next) 
             {
-                message = new ParsecMessage(_type, _time, _data);
+                message = new ParsecMessage(device, code, data, _time, _silentData);
                 next = _next;
             }
         }

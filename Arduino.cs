@@ -41,7 +41,7 @@ namespace Parsec
                     waitingForResponse = false;
                 }
             }
-
+            
             //Send the Start message, which tells the arduino we are ready to start the music
             commsPort.Write(nums, 1, 1);
         }
@@ -74,8 +74,8 @@ namespace Parsec
 
         public void writeParsecMessage(ParsecMessage message)
         {
-            commsPort.Write(message.getMessage(), 0, 9);
-            //Console.WriteLine("Type: {0} Time:{1} Data:{2}", message.getType(), message.getTime(), message.getData());
+            commsPort.Write(message.getMessage(), 0, 5);
+            //message.print();
         }
 
 
