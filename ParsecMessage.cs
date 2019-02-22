@@ -34,6 +34,11 @@ namespace Parsec
             Console.WriteLine("Type: {0} Time: {1} Data: {2}", type, time, data);
         }
 
+        public void print(int track)
+        {
+            Console.WriteLine("Track: {3} Type: {0} Time: {1} Data: {2}", type, time, data, track);
+        }
+
         public ParsecMessage(byte _type, uint _time, uint _data)
         {
             message = new byte[9];
