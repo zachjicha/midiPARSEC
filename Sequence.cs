@@ -8,9 +8,13 @@ namespace Parsec
     class Sequence
     { 
         private int numberOfTracks;
-        private int clocks;
+        private double clocks;
         private string filename;
         private TrackList trackList;
+        private long[] eventStartTimes;
+        private ParsecMessage[] currentEvents;
+        private double microsPerTick;
+        private int tracksLeft;
 
         public Sequence(string _filename) {
             numberOfTracks = 0;
@@ -22,9 +26,75 @@ namespace Parsec
             }
             catch (FileNotFoundException e)
             {
-                throw new FileNotFoundException("Midi file not found...\n", e);
+                throw new FileNotFoundException("\nMidi file not found...", e);
             }
-            
+
+            tracksLeft = numberOfTracks;
+            eventStartTimes = new long[numberOfTracks];
+            currentEvents = new ParsecMessage[numberOfTracks];
+            microsPerTick = 500000/clocks;
+
+            for(int i = 0; i < numberOfTracks; i++)
+            {
+                currentEvents[i] = getNextEvent(i);
+            }
+        }
+
+        public void initializeStartTimes(long startTime)
+        {
+            for(int i = 0; i < numberOfTracks; i++)
+            {
+                eventStartTimes[i] = startTime;
+            }
+        }
+
+        public void traverseSequence(long currentTime)
+        {
+            for(int i = 0; i < numberOfTracks; i++)
+            {
+                if(currentEvents[i] == null)
+                {
+                    continue;
+                }
+                    
+
+                if((currentTime - eventStartTimes[i]) >= (microsPerTick * currentEvents[i].getTime()))
+                {
+                    //Check if event is a "silent event" (one the arduino doesn't need to know about, but is still a device event)
+                    if((currentEvents[i].getEventCode() & 0xF0) == 0xB0)
+                    {
+                        //Tempo change event
+                        currentEvents[i].print(i);
+                        if(currentEvents[i].getEventCode() == 0xB1)
+                        {
+                            microsPerTick = currentEvents[i].getData()/clocks;
+                        }
+
+                        currentEvents[i] = getNextEvent(i);
+                        eventStartTimes[i] = currentTime;
+                    }
+                    else 
+                    {
+                        currentEvents[i].print(i);
+                        if(currentEvents[i].getEventCode() != 0xAF)
+                        {
+                            currentEvents[i] = getNextEvent(i);
+                            eventStartTimes[i] = currentTime;
+                        }
+                        else
+                        {
+                            tracksLeft--;
+                            currentEvents[i] = null;
+                        }
+                    }
+                    
+                }
+            }
+        }
+
+        public int getTracksLeft()
+        {
+            return tracksLeft;
         }
 
         public ParsecMessage getNextEvent(int track)
@@ -32,7 +102,7 @@ namespace Parsec
             return trackList.getTrack(track).dequeueEvent();
         }
 
-        public int getClocks()
+        public double getClocks()
         {
             return clocks;
         }
@@ -143,9 +213,11 @@ namespace Parsec
                     //printf("%d\n", pairStartIndex);
 
                     //Here are the members of the event we will create
-                    byte eventType = 0;
+                    byte eventDevice = (byte)(i+1);
+                    byte eventCode = 0;
+                    byte eventData = 0;
                     uint eventTime = 0;
-                    uint eventData = 0;
+                    uint eventSilentData = 0;
                     
                     //Set the members of the event
                     VariableLengthValue deltaRead = new VariableLengthValue(bytes, pairStartIndex);
@@ -166,7 +238,7 @@ namespace Parsec
                         if(type == 0x2F) {
                             //This is an EOT event
                             eventData = 0;
-                            eventType = 3;
+                            eventCode = 0xAF;
                             //Record the length of the dt/event pair
                             //EOT event is always 3 long
                             nextPairStartIndex = 3 + eventStartIndex;
@@ -175,8 +247,8 @@ namespace Parsec
                             //this is a tempo meta event
                             uint tempo = (uint)(byteArrayToUnsignedInt(bytes, eventStartIndex+3, eventStartIndex+5));
                             //int tempo = 500000;
-                            eventData = tempo;
-                            eventType = 2;
+                            eventSilentData = tempo;
+                            eventCode = 0xB2;
                             //Record the length of the dt/event pair
                             //Tempo event is always 6 long
                             nextPairStartIndex = 6 + eventStartIndex;
@@ -244,24 +316,24 @@ namespace Parsec
                             if((status & 0xF0) == 0x80) {
                                 //Note off message
                                 eventData = 0;
-                                eventType = 0;
+                                eventCode = 0xA1;
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
                                 isRunningStatus = 1;
                             }
                             else if((status & 0xF0) == 0x90) {
                                 //Note on message
-                                int pitchIndex = bytes[eventStartIndex + 1 - isRunningStatus];
+                                byte pitchIndex = bytes[eventStartIndex + 1 - isRunningStatus];
 
                                 int velocity = bytes[eventStartIndex + 2 - isRunningStatus];
                                 if(velocity == 0) {
                                     //Velocity of zero is really a note off event to sustain running status
                                     eventData = 0;
-                                    eventType = 0;
+                                    eventCode = 0xA1;
                                 }
                                 else {
-                                    eventData = PitchVals.getPitchVal(pitchIndex);
-                                    eventType = 1;
+                                    eventData = pitchIndex;
+                                    eventCode = 0xA2;
                                 }
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
@@ -305,10 +377,10 @@ namespace Parsec
 
                     //Now if we are here that means we got one of the handful of relevant events
                     //So we can add it to our track
-                    currentTrack.enqueueEvent(eventType, eventTime, eventData);
-                    if(eventType == 2) {
+                    currentTrack.enqueueEvent(eventDevice, eventCode, eventData, eventTime, eventSilentData);
+                    /* if(eventType == 2) {
                         currentTrack.enqueueEvent(0, 0, 0);
-                    }
+                    }*/
                     pairStartIndex = nextPairStartIndex;
                 }
                 trackStartIndex = nextPairStartIndex;
