@@ -6,6 +6,7 @@ namespace Parsec
     {
         private byte[] message;
         private uint time;
+        private uint silentData;
 
         public byte[] getMessage()
         {
@@ -50,6 +51,35 @@ namespace Parsec
         public ParsecMessage(byte device, byte code, byte data, uint _time)
         {
             time = _time;
+            message = new byte[8];
+            message[0] = 0xAE;
+            message[1] = device;
+            //Byte 2 (Message Length) is handled below
+            message[3] = code;
+            message[4] = data;
+
+            if(device == 0xFF)
+            {
+                message[2] = 1;
+            }
+            else {
+                //Only note on events carry any extra data
+                if(code == 0xA2)
+                {
+                    message[2] = 2;
+                }
+                else
+                {
+                    message[2] = 1;
+                }
+            }
+        }
+
+        //Silent data constructor
+        public ParsecMessage(byte device, byte code, byte data, uint _time, uint _silentData)
+        {
+            time = _time;
+            silentData = _silentData;
             message = new byte[8];
             message[0] = 0xAE;
             message[1] = device;
