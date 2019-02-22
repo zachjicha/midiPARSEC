@@ -40,12 +40,12 @@ namespace Parsec
 
         public void print()
         {
-            Console.WriteLine("{0} {1} {2} {3} {4}", message[0], message[1], message[2], message[3], message[4]);
+            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2} {4:X2}", message[0], message[1], message[2], message[3], message[4]);
         }
 
         public void print(int track)
         {
-            Console.WriteLine("Track: {5} {0} {1} {2} {3} {4}", message[0], message[1], message[2], message[3], message[4], track);
+            Console.WriteLine("Track: {5}   {0:X2} {1:X2} {2:X2} {3:X2} {4:X2}", message[0], message[1], message[2], message[3], message[4], track);
         }
 
         public ParsecMessage(byte device, byte code, byte data, uint _time, uint _silentData)
