@@ -5,59 +5,73 @@ namespace Parsec
     class ParsecMessage
     {
         private byte[] message;
-        private byte type;
         private uint time;
-        private uint data;
 
         public byte[] getMessage()
         {
             return message;
         }
 
-        public byte getType()
-        {
-            return type;
-        }
-
         public uint getTime()
         {
             return time;
+        }  
+
+        public byte getDeviceAddress()
+        {
+            return message[1];
         }
 
-        public uint getData()
+        public byte getLength()
         {
-            return data;
+            return message[2];
+        }
+
+        public byte getEventCode()
+        {
+            return message[3];
+        }
+
+        public byte getData()
+        {
+            return message[4];
         }
 
         public void print()
         {
-            Console.WriteLine("Type: {0} Time: {1} Data: {2}", type, time, data);
+            Console.WriteLine("{0} {1} {2} {3} {4}", message[0], message[1], message[2], message[3], message[4]);
         }
 
         public void print(int track)
         {
-            Console.WriteLine("Track: {3} Type: {0} Time: {1} Data: {2}", type, time, data, track);
+            Console.WriteLine("Track: {5} {0} {1} {2} {3} {4}", message[0], message[1], message[2], message[3], message[4], track);
         }
 
-        public ParsecMessage(byte _type, uint _time, uint _data)
+        public ParsecMessage(byte device, byte code, byte data, uint _time)
         {
-            message = new byte[9];
-            byte[] timeBytes = BitConverter.GetBytes(_time);
-            //Console.WriteLine("Time Byte Length: {0}", timeBytes.Length);
-            byte[] dataBytes = BitConverter.GetBytes(_data);
-            //Console.WriteLine("Data Byte Length: {0}", dataBytes.Length);
-            message[0] = _type;
-            message[1] = timeBytes[0];
-            message[2] = timeBytes[1];
-            message[3] = timeBytes[2];
-            message[4] = timeBytes[3];
-            message[5] = dataBytes[0];
-            message[6] = dataBytes[1];
-            message[7] = dataBytes[2];
-            message[8] = dataBytes[3];
-            type = _type;
             time = _time;
-            data = _data;
+            message = new byte[8];
+            message[0] = 0xAE;
+            message[1] = device;
+            //Byte 2 (Message Length) is handled below
+            message[3] = code;
+            message[4] = data;
+
+            if(device == 0xFF)
+            {
+                message[2] = 1;
+            }
+            else {
+                //Only note on events carry any extra data
+                if(code == 0xA2)
+                {
+                    message[2] = 2;
+                }
+                else
+                {
+                    message[2] = 1;
+                }
+            }
         }
     }
 }
