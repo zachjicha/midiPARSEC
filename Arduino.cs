@@ -41,7 +41,7 @@ namespace Parsec
                     waitingForResponse = false;
                 }
             }
-
+            
             //Send the Start message, which tells the arduino we are ready to start the music
             commsPort.Write(nums, 1, 1);
         }
