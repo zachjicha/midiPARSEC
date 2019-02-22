@@ -5,25 +5,28 @@ namespace Parsec
     class ParsecMessage
     {
         private byte[] message;
+        private byte type;
+        private uint time;
+        private uint data;
 
         public byte[] getMessage()
         {
             return message;
         }
 
-        public int getType()
+        public byte getType()
         {
-            return message[0];
+            return type;
         }
 
         public uint getTime()
         {
-            return BitConverter.ToUInt32(message, 1);
+            return time;
         }
 
         public uint getData()
         {
-            return BitConverter.ToUInt32(message, 5);
+            return data;
         }
 
         public ParsecMessage(byte _type, uint _time, uint _data)
@@ -42,6 +45,9 @@ namespace Parsec
             message[6] = dataBytes[1];
             message[7] = dataBytes[2];
             message[8] = dataBytes[3];
+            type = _type;
+            time = _time;
+            data = _data;
         }
     }
 }
