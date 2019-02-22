@@ -29,6 +29,11 @@ namespace Parsec
             return data;
         }
 
+        public void print()
+        {
+            Console.WriteLine("Type: {0} Time: {1} Data: {2}", type, time, data);
+        }
+
         public ParsecMessage(byte _type, uint _time, uint _data)
         {
             message = new byte[9];
