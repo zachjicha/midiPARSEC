@@ -27,7 +27,7 @@ void stepperMotorSetup(StepperMotors* stepper) {
 
 void stepperMotorPlay(StepperMotors* stepper) {
     if(stepper->notePeriod[0] > 0) {
-        stepper->cycle[0] += 40;
+        stepper->cycle[0] += 20;
         if(stepper->cycle[0] >= stepper->notePeriod[0]) {
             stepperMotorPulse(stepper, 0);
             stepper->cycle[0] = 0;
@@ -35,7 +35,7 @@ void stepperMotorPlay(StepperMotors* stepper) {
     }
 
     if(stepper->notePeriod[1] > 0) {
-        stepper->cycle[1] += 40;
+        stepper->cycle[1] += 20;
         if(stepper->cycle[1] >= stepper->notePeriod[1]) {
             stepperMotorPulse(stepper, 1);
             stepper->cycle[1] = 0;
@@ -43,7 +43,7 @@ void stepperMotorPlay(StepperMotors* stepper) {
     }
 
     if(stepper->notePeriod[2] > 0) {
-        stepper->cycle[2] += 40;
+        stepper->cycle[2] += 20;
         if(stepper->cycle[2] >= stepper->notePeriod[2]) {
             stepperMotorPulse(stepper, 2);
             stepper->cycle[2] = 0;
@@ -51,7 +51,7 @@ void stepperMotorPlay(StepperMotors* stepper) {
     }
 
     if(stepper->notePeriod[3] > 0) {
-        stepper->cycle[3] += 40;
+        stepper->cycle[3] += 20;
         if(stepper->cycle[3] >= stepper->notePeriod[3]) {
             stepperMotorPulse(stepper, 3);
             stepper->cycle[3] = 0;

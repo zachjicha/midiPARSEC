@@ -34,8 +34,8 @@ void setup() {
   //Reset Timer1
   TCNT1 = 0;
 
-  //Set compare value to 640 (40 micros)
-  OCR1A = 640;
+  //Set compare value to 320 (20 micros)
+  OCR1A = 320;
 
   //Enable Timer1 compare interrupt
   TIMSK1 = (1 << OCIE1A);
