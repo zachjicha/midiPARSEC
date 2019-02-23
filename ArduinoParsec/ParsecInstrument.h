@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#define TIMER_INTERRUPT_INTERVAL 20
+
 const unsigned int pitchVals[] = {
             0, //0, C-1
             0, //1, C#-1
