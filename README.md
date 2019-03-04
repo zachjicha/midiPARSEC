@@ -1,5 +1,5 @@
-# PARSEC
+# midiPARSEC
 
 midi PARser and Serial Encoding Client 
 
-Sister repo to mechO. This will parse a midi file and play it on stepper motors connected to an arduino via serial.
+Sister repo to mechO. This parses a midi file and plays it on stepper motors connected to an arduino via serial.
