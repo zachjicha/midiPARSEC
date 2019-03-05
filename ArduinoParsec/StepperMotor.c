@@ -94,13 +94,5 @@ void stepperMotorHandleMessage(StepperMotors* stepper, byte deviceAddress, byte 
             stepper->notePeriod[deviceAddress] = pitchVals[data[0]];
             stepperMotorAutoMode(stepper, deviceAddress);
             break;
-/*
-        case 0xA3:
-            digitalWrite(stepper->enPins[deviceAddress], HIGH);
-            break;
-
-        case 0xA4:
-            digitalWrite(stepper->enPins[deviceAddress], LOW);
-            break;*/
     }
 }

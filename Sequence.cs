@@ -404,10 +404,6 @@ namespace Parsec
                     //Now if we are here that means we got one of the handful of relevant events
                     //So we can add it to our track
                     currentTrack.enqueueEvent(eventDevice, eventCode, eventData, eventTime, eventSilentData);
-                    if(eventCode == 0xB1)
-                    {
-                        currentTrack.enqueueEvent((byte)(i+1), 0xA1, null, 0, 0);
-                    }
                     pairStartIndex = nextPairStartIndex;
                 }
                 trackStartIndex = nextPairStartIndex;
