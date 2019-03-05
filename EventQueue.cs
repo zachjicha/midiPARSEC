@@ -13,11 +13,10 @@ namespace Parsec
         {
             front = end = null;
             size = 0;
-            enqueueEvent(0, 0, 0, 0, 0);
         }
 
         //Insert an event at the end of the queue
-        public void enqueueEvent(byte device, byte code, byte data, uint time, uint silentData)
+        public void enqueueEvent(byte device, byte code, byte[] data, uint time, uint silentData)
         {
             EventNode node = new EventNode(device, code, data, time, silentData, null);
             if(size == 0)
@@ -67,7 +66,7 @@ namespace Parsec
             public EventNode next;
             public ParsecMessage message;
 
-            public EventNode(byte device, byte code, byte data, uint _time, uint _silentData, EventNode _next) 
+            public EventNode(byte device, byte code, byte[] data, uint _time, uint _silentData, EventNode _next) 
             {
                 message = new ParsecMessage(device, code, data, _time, _silentData);
                 next = _next;

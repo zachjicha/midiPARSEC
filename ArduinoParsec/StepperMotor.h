@@ -23,7 +23,9 @@ void stepperMotorSetup(StepperMotors* stepper);
 void stepperMotorPlay(StepperMotors* stepper);
 void stepperMotorAutoMode(StepperMotors* stepper, int index);
 void stepperMotorPulse(StepperMotors* stepper, int index);
-void stepperMotorHandleMessage(StepperMotors* stepper, byte deviceAddress, byte eventCode, byte data);
+void stepperMotorIdle(StepperMotors* stepper);
+void stepperMotorStandby(StepperMotors* stepper);
+void stepperMotorHandleMessage(StepperMotors* stepper, byte deviceAddress, byte eventCode, byte data[]);
 
 #ifdef __cplusplus
 }

@@ -28,7 +28,7 @@ namespace Parsec
             // The three stages are named Query, Response, Start instead of SYN, SYN+ACK, ACK
 
             bool waitingForResponse = true;
-            byte[] nums = {0x7F, 0xAB};
+            byte[] nums = {0x7F};
 
             //Query the arduino to make sure it is ready
             commsPort.Write(nums, 0, 1);
@@ -41,16 +41,13 @@ namespace Parsec
                     waitingForResponse = false;
                 }
             }
-            
-            //Send the Start message, which tells the arduino we are ready to start the music
-            commsPort.Write(nums, 1, 1);
         }
 
         public void openComms()
         {
             commsPort.Open();
             Console.WriteLine("Waiting for arduino to restart...");
-            System.Threading.Thread.Sleep(5000);
+            System.Threading.Thread.Sleep(1000);
             Console.WriteLine("Shaking hands with arduino...");
             handShake();
         }
@@ -74,8 +71,7 @@ namespace Parsec
 
         public void writeParsecMessage(ParsecMessage message)
         {
-            commsPort.Write(message.getMessage(), 0, 5);
-            //message.print();
+            commsPort.Write(message.getMessage(), 0, message.getLength());
         }
 
 

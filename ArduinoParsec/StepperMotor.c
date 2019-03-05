@@ -7,7 +7,7 @@ void stepperMotorSetup(StepperMotors* stepper) {
     stepper->enPins[0] = 31;
     stepper->enPins[1] = 37;
     stepper->enPins[2] = 43;
-    stepper->enPins[3] = 53;
+    stepper->enPins[3] = 49;
     stepper->stepPins[0] = 35;
     stepper->stepPins[1] = 41;
     stepper->stepPins[2] = 47;
@@ -73,19 +73,34 @@ void stepperMotorPulse(StepperMotors* stepper, int index) {
     digitalWrite(stepper->stepPins[index], LOW);
 }
 
-void stepperMotorHandleMessage(StepperMotors* stepper, byte deviceAddress, byte eventCode, byte data) {
+void stepperMotorIdle(StepperMotors* stepper) {
+    for(int i = 0; i < MAX_STEPPER_MOTORS; i++) {
+      digitalWrite(stepper->enPins[i], HIGH);
+    }
+}
+
+void stepperMotorStandby(StepperMotors* stepper) {
+    for(int i = 0; i < MAX_STEPPER_MOTORS; i++) {
+      digitalWrite(stepper->enPins[i], LOW);
+    }
+}
+void stepperMotorHandleMessage(StepperMotors* stepper, byte deviceAddress, byte eventCode, byte data[]) {
     switch(eventCode){
         case 0xA1:
             stepper->notePeriod[deviceAddress] = 0;
             break;
 
         case 0xA2:
-            stepper->notePeriod[deviceAddress] = pitchVals[data];
+            stepper->notePeriod[deviceAddress] = pitchVals[data[0]];
             stepperMotorAutoMode(stepper, deviceAddress);
             break;
-
-        case 0xAF:
-            stepper->notePeriod[deviceAddress] = 0;
+/*
+        case 0xA3:
+            digitalWrite(stepper->enPins[deviceAddress], HIGH);
             break;
+
+        case 0xA4:
+            digitalWrite(stepper->enPins[deviceAddress], LOW);
+            break;*/
     }
 }

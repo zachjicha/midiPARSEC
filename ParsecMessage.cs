@@ -7,6 +7,20 @@ namespace Parsec
         private byte[] message;
         private uint time;
         private uint silentData;
+        
+        public static byte PARSECMESSAGE_FLAG = 0xAE;
+        public static byte EVENTCODE_DEVICE_NOTEOFF = 0xA1;
+        public static byte EVENTCODE_DEVICE_NOTEON = 0xA2;
+        public static byte EVENTCODE_DEVICE_IDLE = 0xA3;
+        public static byte EVENTCODE_DEVICE_STANDBY = 0xA4;
+        public static byte EVENTCODE_MULTI_NOTEOFF = 0xB1;
+        public static byte EVENTCODE_MULTI_NOTEON = 0xB2;
+        public static byte EVENTCODE_SILENT_TEMPO = 0xC1;
+        public static byte EVENTCODE_SILENT_EOT = 0xCF;
+        public static ParsecMessage SequenceBeginMessage = new ParsecMessage(0xFF, 0xB0, null, 0, 0);
+        public static ParsecMessage SequenceEndMessage = new ParsecMessage(0xFF, 0xE0, null, 0, 0);
+        public static ParsecMessage AllDevicesIdle = new ParsecMessage(0xFF, 0xA1, null, 0, 0);
+        public static ParsecMessage AllDevicesStandby = new ParsecMessage(0xFF, 0xA2, null, 0, 0);
 
         public byte[] getMessage()
         {
@@ -25,7 +39,7 @@ namespace Parsec
 
         public byte getLength()
         {
-            return message[2];
+            return (byte)(4 + message[2]);
         }
 
         public byte getEventCode()
@@ -45,7 +59,7 @@ namespace Parsec
 
         public void print()
         {
-            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2} {4:X2}", message[0], message[1], message[2], message[3], message[4]);
+            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}", message[0], message[1], message[2], message[3]);
         }
 
         public void print(int track)
@@ -53,32 +67,31 @@ namespace Parsec
             Console.WriteLine("Track: {5}   {0:X2} {1:X2} {2:X2} {3:X2} {4:X2}", message[0], message[1], message[2], message[3], message[4], track);
         }
 
-        public ParsecMessage(byte device, byte code, byte data, uint _time, uint _silentData)
-        {
-            time = _time;
-            silentData = _silentData;
-            message = new byte[5];
-            message[0] = 0xAE;
-            message[1] = device;
-            //Byte 2 (Message Length) is handled below
-            message[3] = code;
-            message[4] = data;
+        public ParsecMessage(byte device, byte code, byte[] data, uint _time, uint _silentData)
+        {   
 
-            if(device == 0xFF)
+            if(data == null)
             {
-                message[2] = 1;
+                message = new byte[4];
             }
             else {
-                //Only note on events carry any extra data
-                if(code == 0xA2)
+                message = new byte[4 + data.Length];
+            }
+            time = _time;
+            silentData = _silentData;
+            message[0] = PARSECMESSAGE_FLAG;
+            message[1] = device;
+            message[2] = (byte)(message.Length - 4);
+            message[3] = code;
+
+            if(data != null) 
+            {
+                for(int i = 4; i < message.Length; i++)
                 {
-                    message[2] = 2;
-                }
-                else
-                {
-                    message[2] = 1;
+                    message[i] = data[i - 4];
                 }
             }
+            
         }
     }
 }

@@ -2,18 +2,54 @@
 
 StepperMotors steppers;
 
+enum State {
+  RECEIVE_QUERY,
+  SEND_RESPONSE,
+  WAITING_FOR_START,
+  PLAY_MUSIC,
+  SEQUENCE_END,
+};
+
+State state = RECEIVE_QUERY;
+int light = LOW;
+long mils = 0;
+
 void parseMessage() {
   //If message flag is found
   if(Serial.read() == 0xAE) {
-    byte bytebuffer[4]; 
-    //Read the important bits
-    Serial.readBytes(bytebuffer, 4);
+    byte bytebuffer[3]; 
+    //Read the important bytes
+    Serial.readBytes(bytebuffer, 3);
+    byte databuffer[bytebuffer[1]];
+    if(bytebuffer[1] != 0) {
+      Serial.readBytes(databuffer, bytebuffer[1]);
+    }
 
-    stepperMotorHandleMessage(&steppers, bytebuffer[0]-1, bytebuffer[2], bytebuffer[3]);
+    if(bytebuffer[0] == 0xFF) {
+      if(bytebuffer[2] == 0xB0) {
+        state = PLAY_MUSIC;
+        digitalWrite(LED_BUILTIN, HIGH);
+      }
+      else if(bytebuffer[2] == 0xE0) {
+        state = SEQUENCE_END;
+        digitalWrite(LED_BUILTIN, LOW);
+      }
+      else if(bytebuffer[2] == 0xA1) {
+        stepperMotorIdle(&steppers);
+      }
+      else if(bytebuffer[2] == 0xA2) {
+        stepperMotorStandby(&steppers);
+      }
+    }
+    else {
+      stepperMotorHandleMessage(&steppers, bytebuffer[0]-1, bytebuffer[2], databuffer);
+    }
   }
 }
 
 void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
   Serial.begin(9600);
   // put your setup code here, to run once:
   stepperMotorSetup(&steppers);
@@ -43,18 +79,8 @@ void setup() {
   //Enable Global Interrupts
   sei();
 
+  mils = millis();
 }
-
-enum State {
-  RECEIVE_QUERY,
-  SEND_RESPONSE,
-  WAITING_FOR_START,
-  PLAY_MUSIC,
-  SEND_END_SEQUENCE,
-  DO_NOTHING
-};
-
-State state = RECEIVE_QUERY;
 
 void loop() {
   switch(state){
@@ -73,20 +99,18 @@ void loop() {
 
       break;
     case WAITING_FOR_START:
-    
-      if(Serial.read() == 0xAB) {
-        state = PLAY_MUSIC;
+      if(millis() - mils >= 500) {
+        light = !light;
+        mils = millis();
       }
-
+      digitalWrite(LED_BUILTIN, light);
+      parseMessage();
       break;
     case PLAY_MUSIC:
       parseMessage();
-      
       break;
-    case SEND_END_SEQUENCE:
-      state = DO_NOTHING;
-      break;
-    case DO_NOTHING:
+    case SEQUENCE_END:
+      stepperMotorIdle(&steppers);
       break;
   }
 }

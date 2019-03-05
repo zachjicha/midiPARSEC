@@ -15,8 +15,10 @@ namespace Parsec
         private ParsecMessage[] currentEvents;
         private double microsPerTick;
         private int tracksLeft;
+        private bool isVideo;
 
-        public Sequence(string _filename) {
+        public Sequence(string _filename, bool _isVideo) {
+            isVideo = _isVideo;
             numberOfTracks = 0;
             filename = _filename;
             trackList = new TrackList();
@@ -50,6 +52,8 @@ namespace Parsec
 
         public void traverseSequence(long currentTime, Arduino arduino)
         {
+            double tempConversion = 0;
+            bool tempoEncountered = false;
             for(int i = 0; i < numberOfTracks; i++)
             {
                 if(currentEvents[i] == null)
@@ -60,33 +64,42 @@ namespace Parsec
 
                 if((currentTime - eventStartTimes[i]) >= (microsPerTick * currentEvents[i].getTime()))
                 {
-                    //Check if event is a "silent event" (one the arduino doesn't need to know about, but is still a device event)
-                    if((currentEvents[i].getEventCode() & 0xF0) == 0xB0)
+                    //Check if event is a "silent event" (one the arduino doesn't need to know about, but is still an event)
+                    if((currentEvents[i].getEventCode() & 0xF0) == 0xC0)
                     {
-                        //Tempo change event
-                        if(currentEvents[i].getEventCode() == 0xB1)
-                        {   
-                            microsPerTick = currentEvents[i].getSilentData()/clocks;
-                        }
-
-                        currentEvents[i] = getNextEvent(i);
-                        eventStartTimes[i] = currentTime;
-                    }
-                    else 
-                    {
-                        arduino.writeParsecMessage(currentEvents[i]);
-                        if(currentEvents[i].getEventCode() != 0xAF)
-                        {
-                            currentEvents[i] = getNextEvent(i);
-                            eventStartTimes[i] = currentTime;
-                        }
-                        else
+                        
+                        if(currentEvents[i].getEventCode() == ParsecMessage.EVENTCODE_SILENT_EOT) 
                         {
                             tracksLeft--;
                             currentEvents[i] = null;
                         }
+                        else 
+                        {
+                            //Tempo change event
+                            if(currentEvents[i].getEventCode() == ParsecMessage.EVENTCODE_SILENT_TEMPO)
+                            {   
+                                tempConversion = currentEvents[i].getSilentData()/clocks;
+                                tempoEncountered = true;
+                            }
+                            currentEvents[i] = getNextEvent(i);
+                            eventStartTimes[i] = currentTime;
+                        }
+
+                        
+                    }
+                    else 
+                    {
+                        arduino.writeParsecMessage(currentEvents[i]);
+                        currentEvents[i] = getNextEvent(i);
+                        eventStartTimes[i] = currentTime;
+                        
                     }
                 }
+            }
+
+            if(tempoEncountered)
+            {
+                microsPerTick = tempConversion;
             }
         }
 
@@ -189,6 +202,17 @@ namespace Parsec
                 EventQueue currentTrack = new EventQueue();
                 trackList.appendTrack(currentTrack);
 
+                //Add some events to the beginning for calibration and timing purposes
+                currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 0, 0);
+                /*if(isVideo) {
+                    currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_IDLE, null, 0, 0);
+                    currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_STANDBY, null, 5000, 0);
+                }*/
+                byte[] calibrationNote = {72};
+                currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEON, calibrationNote, 0, 0);
+                currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 500, 0);
+                currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 1500, 0);
+
                 //Length of the data of the chunk
                 int chunkLength = byteArrayToUnsignedInt(bytes, trackStartIndex+4, trackStartIndex+7);
 
@@ -213,7 +237,7 @@ namespace Parsec
                     //Here are the members of the event we will create
                     byte eventDevice = (byte)(i+1);
                     byte eventCode = 0;
-                    byte eventData = 0;
+                    byte[] eventData = null;
                     uint eventTime = 0;
                     uint eventSilentData = 0;
                     
@@ -235,8 +259,8 @@ namespace Parsec
                         //Check the type of meta event
                         if(type == 0x2F) {
                             //This is an EOT event
-                            eventData = 0;
-                            eventCode = 0xAF;
+                            eventData = null;
+                            eventCode = ParsecMessage.EVENTCODE_SILENT_EOT;
                             //Record the length of the dt/event pair
                             //EOT event is always 3 long
                             nextPairStartIndex = 3 + eventStartIndex;
@@ -246,7 +270,7 @@ namespace Parsec
                             uint tempo = (uint)(byteArrayToUnsignedInt(bytes, eventStartIndex+3, eventStartIndex+5));
                             //int tempo = 500000;
                             eventSilentData = tempo;
-                            eventCode = 0xB1;
+                            eventCode = ParsecMessage.EVENTCODE_SILENT_TEMPO;
                             //Record the length of the dt/event pair
                             //Tempo event is always 6 long
                             nextPairStartIndex = 6 + eventStartIndex;
@@ -295,7 +319,8 @@ namespace Parsec
                         //If we skipped the prior if statement, then we are in running status, so keep using the previous status
 
                         //Check which status we are in
-                        if((status & 0xF0) == 0xB0) {
+                        if((status & 0xF0) == 0xB0) 
+                        {
 
                             //If we are here, then this is either a Channel Mode Message or Controller Change message
                             //None of these events are relevant
@@ -311,10 +336,11 @@ namespace Parsec
                         else {
 
                             //Check the status byte
-                            if((status & 0xF0) == 0x80) {
+                            if((status & 0xF0) == 0x80) 
+                            {
                                 //Note off message
-                                eventData = 0;
-                                eventCode = 0xA1;
+                                eventData = null;
+                                eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEOFF;
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
                                 isRunningStatus = 1;
@@ -324,14 +350,16 @@ namespace Parsec
                                 byte pitchIndex = bytes[eventStartIndex + 1 - isRunningStatus];
 
                                 int velocity = bytes[eventStartIndex + 2 - isRunningStatus];
-                                if(velocity == 0) {
+                                if(velocity == 0) 
+                                {
                                     //Velocity of zero is really a note off event to sustain running status
-                                    eventData = 0;
-                                    eventCode = 0xA1;
+                                    eventData = null;
+                                    eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEOFF;
                                 }
                                 else {
-                                    eventData = pitchIndex;
-                                    eventCode = 0xA2;
+                                    eventData = new byte[1];
+                                    eventData[0] = pitchIndex;
+                                    eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEON;
                                 }
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
@@ -376,6 +404,10 @@ namespace Parsec
                     //Now if we are here that means we got one of the handful of relevant events
                     //So we can add it to our track
                     currentTrack.enqueueEvent(eventDevice, eventCode, eventData, eventTime, eventSilentData);
+                    if(eventCode == 0xB1)
+                    {
+                        currentTrack.enqueueEvent((byte)(i+1), 0xA1, null, 0, 0);
+                    }
                     pairStartIndex = nextPairStartIndex;
                 }
                 trackStartIndex = nextPairStartIndex;
