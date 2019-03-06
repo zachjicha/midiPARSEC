@@ -15,10 +15,8 @@ namespace Parsec
         private ParsecMessage[] currentEvents;
         private double microsPerTick;
         private int tracksLeft;
-        private bool isVideo;
 
-        public Sequence(string _filename, bool _isVideo) {
-            isVideo = _isVideo;
+        public Sequence(string _filename) {
             numberOfTracks = 0;
             filename = _filename;
             trackList = new TrackList();

@@ -15,24 +15,14 @@ namespace Parsec
         {
             
 
-            if(args.Length < 2)
+            if(args.Length != 2)
             {
-                throw new ArgumentException("\nIncorrect arguments!\nCorrect usage: dotnet run <portname> <file>.mid <options>\nAcceptable options: v [Idle motors for 20 secs before playback]");
-            }
-
-            bool isVideo = false;
-
-            if(args.Length == 3) 
-            {
-                if(args[2] == "v") 
-                {
-                    isVideo = true;
-                }
+                throw new ArgumentException("\nIncorrect arguments!\nCorrect usage: dotnet run <portname> <file>.mid");
             }
 
             // Parse the midi file
             Console.WriteLine("Parsing {0}...", args[1]);
-            Sequence sequence = new Sequence(args[1], isVideo);
+            Sequence sequence = new Sequence(args[1]);
             Console.WriteLine("{0} successfully parsed!", args[1]);
             // Debug print the sequence
             //sequence.print();
@@ -41,13 +31,8 @@ namespace Parsec
             arduino.openComms();
             Console.WriteLine("Comms established! Ready to play...");
 
-            Console.WriteLine("Press ENTER to begin...");
-
-            if(isVideo)
-            {
-                Console.WriteLine("All devices idling...");
-                arduino.writeParsecMessage(ParsecMessage.AllDevicesIdle);
-            }
+            Console.WriteLine("All devices idling! Press ENTER to begin...");
+            arduino.writeParsecMessage(ParsecMessage.AllDevicesIdle);
             
             while(true)
             {
@@ -58,11 +43,9 @@ namespace Parsec
                 }
             }
 
-            if(isVideo)
-            {
-                Console.WriteLine("All devices standing by...");
-                arduino.writeParsecMessage(ParsecMessage.AllDevicesStandby);
-            }
+            Console.WriteLine("All devices standing by...");
+            arduino.writeParsecMessage(ParsecMessage.AllDevicesStandby);
+
 
             arduino.writeParsecMessage(ParsecMessage.SequenceBeginMessage);
 
