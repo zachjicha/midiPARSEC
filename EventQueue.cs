@@ -65,7 +65,6 @@ namespace Parsec
         {
             public EventNode next;
             public ParsecMessage message;
-
             public EventNode(byte device, byte code, byte[] data, uint _time, uint _silentData, EventNode _next) 
             {
                 message = new ParsecMessage(device, code, data, _time, _silentData);

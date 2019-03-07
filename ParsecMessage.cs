@@ -59,7 +59,7 @@ namespace Parsec
 
         public void print()
         {
-            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}", message[0], message[1], message[2], message[3]);
+            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}  Time:{4}", message[0], message[1], message[2], message[3], time);
         }
 
         public void print(int track)
@@ -69,7 +69,6 @@ namespace Parsec
 
         public ParsecMessage(byte device, byte code, byte[] data, uint _time, uint _silentData)
         {   
-
             if(data == null)
             {
                 message = new byte[4];

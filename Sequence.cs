@@ -138,12 +138,18 @@ namespace Parsec
                 value = 0;
                 int index = start;
 
-                do 
+                while(true)
                 {
-                    value = (uint)((value * 128) + (bytes[index] & 0x7F));
+                    value = (uint)((value << 7) + (bytes[index] & 0x7F));
                     numberOfBytes++;
-                } while(((bytes[index++] & 0x80) == 0x80));
-                // Loop while first bit == 1
+                    //If first bit is 0, we are done
+                    if((bytes[index] & 0x80) != 0x80)
+                    {
+                        break;
+                    }
+                    index++;
+                
+                }
             }
         }
 
@@ -224,6 +230,9 @@ namespace Parsec
                 //this is since the start of the chunk is s, the header is 8 bytes and the rest is chunkLength bytes
                 //Loop through each dt/event pair
 
+                //This is for dts from ignored events
+                uint ignoredDT = 0;
+
                 while(pairStartIndex < chunkLength + trackStartIndex + 8) {
 
                     //printf("%d\n", pairStartIndex);
@@ -237,7 +246,7 @@ namespace Parsec
                     
                     //Set the members of the event
                     VariableLengthValue deltaRead = new VariableLengthValue(bytes, pairStartIndex);
-                    eventTime = deltaRead.value;
+                    eventTime = deltaRead.value + ignoredDT;
 
                     //eventStartIndex is the index of the first byte of the event in the current delta time/event pair
                     int eventStartIndex = (int)(pairStartIndex + deltaRead.numberOfBytes);
@@ -258,6 +267,7 @@ namespace Parsec
                             //Record the length of the dt/event pair
                             //EOT event is always 3 long
                             nextPairStartIndex = 3 + eventStartIndex;
+                            ignoredDT = 0;
                         }
                         else if(type == 0x51) {
                             //this is a tempo meta event
@@ -268,6 +278,7 @@ namespace Parsec
                             //Record the length of the dt/event pair
                             //Tempo event is always 6 long
                             nextPairStartIndex = 6 + eventStartIndex;
+                            ignoredDT = 0;
                         }
                         else {
                             //This is for events we dont care about
@@ -280,6 +291,7 @@ namespace Parsec
                             nextPairStartIndex = (int)(variableLengthRead.value + variableLengthRead.numberOfBytes + eventStartIndex + 2);
                             //Skip the rest of this loop
                             pairStartIndex = nextPairStartIndex;
+                            ignoredDT += eventTime;
                             continue;
                         }
                     }
@@ -297,6 +309,7 @@ namespace Parsec
                         nextPairStartIndex = (int)(variableLengthRead.value + variableLengthRead.numberOfBytes + eventStartIndex + 1);
                         //Skip the rest of this loop
                         pairStartIndex = nextPairStartIndex;
+                        ignoredDT += eventTime;
                         continue;
                     }
 
@@ -315,13 +328,13 @@ namespace Parsec
                         //Check which status we are in
                         if((status & 0xF0) == 0xB0) 
                         {
-
                             //If we are here, then this is either a Channel Mode Message or Controller Change message
                             //None of these events are relevant
                             //All events in this grouping have a length of 3
                             nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
                             isRunningStatus = 1;
                             pairStartIndex = nextPairStartIndex;
+                            ignoredDT += eventTime;
                             continue;
                         }
 
@@ -331,13 +344,14 @@ namespace Parsec
 
                             //Check the status byte
                             if((status & 0xF0) == 0x80) 
-                            {
+                            {   
                                 //Note off message
                                 eventData = null;
                                 eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEOFF;
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
                                 isRunningStatus = 1;
+                                ignoredDT = 0;
                             }
                             else if((status & 0xF0) == 0x90) {
                                 //Note on message
@@ -358,12 +372,14 @@ namespace Parsec
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
                                 isRunningStatus = 1;
+                                ignoredDT = 0;
                             }
                             else if((status & 0xF0) == 0xA0) {
                                 //Polyphonic pressure
                                 nextPairStartIndex = 3 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
+                                ignoredDT += eventTime;
                                 continue;
                             }
                             else if((status & 0xF0) == 0xC0) {
@@ -372,6 +388,7 @@ namespace Parsec
                                 nextPairStartIndex = 2 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
+                                ignoredDT += eventTime;
                                 continue;
                             }
                             else if((status & 0xF0) == 0xD0) {
@@ -380,6 +397,7 @@ namespace Parsec
                                 nextPairStartIndex = 2 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
+                                ignoredDT += eventTime;
                                 continue;
                             }
                             else if((status & 0xF0) == 0xE0) {
@@ -389,6 +407,7 @@ namespace Parsec
                                 nextPairStartIndex = 3 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
+                                ignoredDT += eventTime;
                                 continue;
                             }
                         }
