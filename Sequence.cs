@@ -291,7 +291,7 @@ namespace Parsec
                             nextPairStartIndex = (int)(variableLengthRead.value + variableLengthRead.numberOfBytes + eventStartIndex + 2);
                             //Skip the rest of this loop
                             pairStartIndex = nextPairStartIndex;
-                            ignoredDT += eventTime;
+                            ignoredDT = eventTime;
                             continue;
                         }
                     }
@@ -309,7 +309,7 @@ namespace Parsec
                         nextPairStartIndex = (int)(variableLengthRead.value + variableLengthRead.numberOfBytes + eventStartIndex + 1);
                         //Skip the rest of this loop
                         pairStartIndex = nextPairStartIndex;
-                        ignoredDT += eventTime;
+                        ignoredDT = eventTime;
                         continue;
                     }
 
@@ -334,7 +334,7 @@ namespace Parsec
                             nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
                             isRunningStatus = 1;
                             pairStartIndex = nextPairStartIndex;
-                            ignoredDT += eventTime;
+                            ignoredDT = eventTime;
                             continue;
                         }
 
@@ -379,7 +379,7 @@ namespace Parsec
                                 nextPairStartIndex = 3 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
-                                ignoredDT += eventTime;
+                                ignoredDT = eventTime;
                                 continue;
                             }
                             else if((status & 0xF0) == 0xC0) {
@@ -388,7 +388,7 @@ namespace Parsec
                                 nextPairStartIndex = 2 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
-                                ignoredDT += eventTime;
+                                ignoredDT = eventTime;
                                 continue;
                             }
                             else if((status & 0xF0) == 0xD0) {
@@ -397,7 +397,7 @@ namespace Parsec
                                 nextPairStartIndex = 2 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
-                                ignoredDT += eventTime;
+                                ignoredDT = eventTime;
                                 continue;
                             }
                             else if((status & 0xF0) == 0xE0) {
@@ -407,7 +407,7 @@ namespace Parsec
                                 nextPairStartIndex = 3 + eventStartIndex;
                                 isRunningStatus = 1;
                                 pairStartIndex = nextPairStartIndex;
-                                ignoredDT += eventTime;
+                                ignoredDT = eventTime;
                                 continue;
                             }
                         }
