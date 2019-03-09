@@ -211,7 +211,8 @@ namespace Parsec
                 byte[] calibrationNote = {72};
                 currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEON, calibrationNote, 0, 0);
                 currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 750, 0);
-                currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 2000, 0);
+                //Wait a little
+                currentTrack.enqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 5000, 0);
 
                 //Length of the data of the chunk
                 int chunkLength = byteArrayToUnsignedInt(bytes, trackStartIndex+4, trackStartIndex+7);
