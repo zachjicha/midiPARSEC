@@ -126,6 +126,11 @@ namespace Parsec
             trackList.print();
         }
 
+        public void print(int track)
+        {
+            trackList.print(track);
+        }
+
         // Class needed for parsing midi variable length values 
         private class VariableLengthValue
         {

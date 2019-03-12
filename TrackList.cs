@@ -60,6 +60,23 @@ namespace Parsec
             }
         }
 
+        public void print(int track)
+        {
+            TrackNode current = head;
+            int i = 0;
+            while(current != null)
+            {
+                Console.WriteLine("Track: {0}", i);
+                if(i == track)
+                {
+                    current.track.print();
+                    break;
+                }
+                current = current.next;
+                i++;
+            }
+        }
+
         private class TrackNode 
         {
             public TrackNode next;
