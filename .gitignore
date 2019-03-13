@@ -346,3 +346,6 @@ MigrationBackup/
 
 #Ignore midi files
 *.mid
+
+#Ignore vscode files
+.vscode
