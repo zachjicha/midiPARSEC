@@ -8,81 +8,90 @@ namespace Parsec
         private uint time;
         private uint silentData;
         
+        //All the different event codes
         public static byte PARSECMESSAGE_FLAG = 0xAE;
         public static byte EVENTCODE_DEVICE_NOTEOFF = 0xA1;
         public static byte EVENTCODE_DEVICE_NOTEON = 0xA2;
-        public static byte EVENTCODE_DEVICE_IDLE = 0xA3;
-        public static byte EVENTCODE_DEVICE_STANDBY = 0xA4;
-        public static byte EVENTCODE_MULTI_NOTEOFF = 0xB1;
-        public static byte EVENTCODE_MULTI_NOTEON = 0xB2;
         public static byte EVENTCODE_SILENT_TEMPO = 0xC1;
         public static byte EVENTCODE_SILENT_EOT = 0xCF;
-        public static ParsecMessage SequenceBeginMessage = new ParsecMessage(0xFF, 0xB0, null, 0, 0);
-        public static ParsecMessage SequenceEndMessage = new ParsecMessage(0xFF, 0xE0, null, 0, 0);
-        public static ParsecMessage AllDevicesIdle = new ParsecMessage(0xFF, 0xA1, null, 0, 0);
-        public static ParsecMessage AllDevicesStandby = new ParsecMessage(0xFF, 0xA2, null, 0, 0);
+        public static byte EVENTCODE_BROADCAST_IDLE = 0xA1;
+        public static byte EVENTCODE_BROADCAST_STANDBY = 0xA2;
+        public static byte EVENTCODE_BROADCAST_SEQUENCEBEGIN = 0xB0;
+        public static byte EVENTCODE_BROADCAST_SEQUENCEEND = 0xE0;
 
-        public byte[] getMessage()
+        //Some special PARSEC messages
+        public static ParsecMessage SequenceBeginMessage = new ParsecMessage(0xFF, EVENTCODE_BROADCAST_SEQUENCEBEGIN, null, 0, 0);
+        public static ParsecMessage SequenceEndMessage = new ParsecMessage(0xFF, EVENTCODE_BROADCAST_SEQUENCEEND, null, 0, 0);
+        public static ParsecMessage AllDevicesIdle = new ParsecMessage(0xFF, EVENTCODE_BROADCAST_IDLE, null, 0, 0);
+        public static ParsecMessage AllDevicesStandby = new ParsecMessage(0xFF, EVENTCODE_BROADCAST_STANDBY, null, 0, 0);
+
+        //Getters
+        public byte[] GetMessage()
         {
             return message;
         }
 
-        public uint getTime()
+        public uint GetTime()
         {
             return time;
         }  
 
-        public byte getDeviceAddress()
+        public byte GetDeviceAddress()
         {
             return message[1];
         }
 
-        public byte getLength()
+        public byte GetLength()
         {
             return (byte)(4 + message[2]);
         }
 
-        public byte getEventCode()
+        public byte GetEventCode()
         {
             return message[3];
         }
 
-        public byte getData()
+        public byte GetData()
         {
             return message[4];
         }
 
-        public uint getSilentData()
+        public uint GetSilentData()
         {
             return silentData;
         }
 
-        public void print()
+        //Debug print method
+        public void Print()
         {
             Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}  Time:{4}", message[0], message[1], message[2], message[3], time);
         }
 
-        public void print(int track)
-        {
-            Console.WriteLine("Track: {5}   {0:X2} {1:X2} {2:X2} {3:X2} {4:X2}", message[0], message[1], message[2], message[3], message[4], track);
-        }
-
+        //PARSEC message class
         public ParsecMessage(byte device, byte code, byte[] data, uint _time, uint _silentData)
         {   
+            //If no data, length = 0
             if(data == null)
             {
                 message = new byte[4];
             }
+            //Else length = data.Length
             else {
                 message = new byte[4 + data.Length];
             }
+
+            //midi dt
             time = _time;
+            //Data for silent events
             silentData = _silentData;
+
+            //Set actual bytes of message
             message[0] = PARSECMESSAGE_FLAG;
             message[1] = device;
             message[2] = (byte)(message.Length - 4);
             message[3] = code;
-
+            
+            //Append data array
             if(data != null) 
             {
                 for(int i = 4; i < message.Length; i++)

@@ -16,7 +16,7 @@ namespace Parsec
         }
 
         //Insert an event at the end of the queue
-        public void enqueueEvent(byte device, byte code, byte[] data, uint time, uint silentData)
+        public void EnqueueEvent(byte device, byte code, byte[] data, uint time, uint silentData)
         {
             EventNode node = new EventNode(device, code, data, time, silentData, null);
             if(size == 0)
@@ -31,7 +31,7 @@ namespace Parsec
         }
 
         // Dequeue an event and return its contents as a tuple
-        public ParsecMessage dequeueEvent()
+        public ParsecMessage DequeueEvent()
         {
             if(size == 0)
             {
@@ -50,17 +50,19 @@ namespace Parsec
             }
         }
 
-        public void print()
+        //Debugging print function
+        public void Print()
         {
             EventNode current = front;
 
             while(current != null)
             {
-                current.message.print();
+                current.message.Print();
                 current = current.next;
             }
         }
 
+        //Custom Node class, wraps around a PARSEC message
         private class EventNode 
         {
             public EventNode next;

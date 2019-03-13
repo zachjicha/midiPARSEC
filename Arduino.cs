@@ -11,27 +11,29 @@ namespace Parsec
 
         private SerialPort commsPort;
 
-
         public Arduino(string port)
         {
+            //Open serial port with baud rate 9600
             commsPort = new SerialPort(port, 9600);
             //This option ensures the arduino restarts when we run the program
             commsPort.DtrEnable = true;
+            //Default timeouts half a second, don't really matter
             commsPort.ReadTimeout = 500;
             commsPort.WriteTimeout = 500;
         }
         
-        private void handShake()
+        //Handshake with arduino to open comms
+        private void HandShake()
         {
             // This handshake establishes comms with the arduino
-            // It works just like a TCP handshake
-            // The three stages are named Query, Response, Start instead of SYN, SYN+ACK, ACK
+            // It works just like a TCP handshake, but only 2 steps
+            // The two stages are named Query, Response
 
             bool waitingForResponse = true;
-            byte[] nums = {0x7F};
+            byte[] queryByte = {0x7F};
 
             //Query the arduino to make sure it is ready
-            commsPort.Write(nums, 0, 1);
+            commsPort.Write(queryByte, 0, 1);
 
             //Wait for the Response from the Arduino to indicate it is ready
             while(waitingForResponse)
@@ -43,39 +45,33 @@ namespace Parsec
             }
         }
 
-        public void openComms()
+        //Method to open serial port
+        public void OpenComms()
         {
+            //OPen the port
             commsPort.Open();
             Console.WriteLine("Waiting for arduino to restart...");
+
+            //Opening the serial port causes the arduino to restart, so wait a second for it to do that
             System.Threading.Thread.Sleep(1000);
+
+            //Shake hands with arduino
             Console.WriteLine("Shaking hands with arduino...");
-            handShake();
+            HandShake();
         }
 
-        public void closeComms()
+        //Method to close serial port
+        public void CloseComms()
         {
+            //Close the port
             commsPort.Close();
-        }  
-
-        public int listenForRequest()
-        {
-            try{
-                return commsPort.ReadByte();
-            }
-            catch
-            {
-                //In case of a timeout
-                return -1;
-            }
         } 
 
-        public void writeParsecMessage(ParsecMessage message)
+        //Method to write the bytes of a PARSEC message to the serial port
+        public void WriteParsecMessage(ParsecMessage message)
         {
-            commsPort.Write(message.getMessage(), 0, message.getLength());
+            //Write the message bytes
+            commsPort.Write(message.GetMessage(), 0, message.GetLength());
         }
-
-
     }
-
-
 }

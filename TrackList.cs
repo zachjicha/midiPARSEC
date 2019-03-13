@@ -2,7 +2,7 @@ using System;
 
 namespace Parsec
 {
-    // EventList is a special implementation of a linked list which represents a midi track
+    // TrackList is a special implementation of a linked list which represents a midi sequence
     class TrackList
     {
         private int size;
@@ -17,7 +17,7 @@ namespace Parsec
 
         //Insert an empty track at the end of the list
         //Note there is no remove function, it is not necessary
-        public void appendTrack(EventQueue e)
+        public void AppendTrack(EventQueue e)
         {
             if(size == 0)
             {
@@ -30,7 +30,8 @@ namespace Parsec
             size++;
         }
 
-        public EventQueue getTrack(int index) 
+        //Getter
+        public EventQueue GetTrack(int index) 
         {
             if(index < 0 || index >= size)
             {
@@ -48,19 +49,20 @@ namespace Parsec
             }
         }
 
-        public void print()
+        //Debug print methods
+        public void Print()
         {
             TrackNode current = head;
             int i = 0;
             while(current != null)
             {
                 Console.WriteLine("Track: {0}", i++);
-                current.track.print();
+                current.track.Print();
                 current = current.next;
             }
         }
 
-        public void print(int track)
+        public void Print(int track)
         {
             TrackNode current = head;
             int i = 0;
@@ -69,7 +71,7 @@ namespace Parsec
                 Console.WriteLine("Track: {0}", i);
                 if(i == track)
                 {
-                    current.track.print();
+                    current.track.Print();
                     break;
                 }
                 current = current.next;
@@ -77,6 +79,7 @@ namespace Parsec
             }
         }
 
+        //Custom internal node class
         private class TrackNode 
         {
             public TrackNode next;
