@@ -4,7 +4,7 @@ midi PARser and Serial Encoding Client
 
 Successor to the mechO project. This parses a midi file and plays it on stepper motors connected to an arduino via serial.
 
-As of now, the only way to run the code is to clone the repo and run it in VSCode or command line via dotnet run. Better ways to run the code will come in the future.
+For instructions on setting up and running the code, head over to the [installation and setup](https://github.com/zachjicha13/midiPARSEC/wiki/Installation-and-Setup) wiki page
 
 Visit the wiki for more information.
 
