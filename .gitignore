@@ -348,4 +348,5 @@ MigrationBackup/
 *.mid
 
 #Ignore vscode files
-.vscode
+/midiPARSEC/.vscode/*
+*.code-workspace

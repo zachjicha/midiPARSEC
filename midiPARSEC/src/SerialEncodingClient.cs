@@ -6,7 +6,7 @@ using System.Windows.Input;
 
 
 
-namespace Parsec
+namespace midiParsec
 {
     // Serial Encoding Client component, main class of PARSEC
     class SerialEncodingClient

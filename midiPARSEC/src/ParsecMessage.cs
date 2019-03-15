@@ -1,6 +1,6 @@
 using System;
 
-namespace Parsec
+namespace midiParsec
 {
     class ParsecMessage
     {

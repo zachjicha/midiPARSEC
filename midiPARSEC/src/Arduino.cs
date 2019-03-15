@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.IO.Ports;
 
-namespace Parsec
+namespace midiParsec
 {
 
     // This class holds the serial ports and comms functions

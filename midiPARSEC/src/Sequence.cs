@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Parsec
+namespace midiParsec
 {
     // Sequence object, stores midi sequences as a linked list of queues
     // Each track in the sequence is stored as a queue in the list

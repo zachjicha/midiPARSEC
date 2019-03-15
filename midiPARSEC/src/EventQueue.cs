@@ -1,6 +1,6 @@
 using System;
 
-namespace Parsec
+namespace midiParsec
 {
     // EventList is a special implementation of a queue which represents a midi track
     class EventQueue

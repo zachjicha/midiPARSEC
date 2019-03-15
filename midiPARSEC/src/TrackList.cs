@@ -1,6 +1,6 @@
 using System;
 
-namespace Parsec
+namespace midiParsec
 {
     // TrackList is a special implementation of a linked list which represents a midi sequence
     class TrackList
