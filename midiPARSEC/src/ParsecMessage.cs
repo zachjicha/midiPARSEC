@@ -4,9 +4,9 @@ namespace midiParsec
 {
     class ParsecMessage
     {
-        private byte[] message;
-        private uint time;
-        private uint silentData;
+        private byte[] _message;
+        private uint _time;
+        private uint _silentData;
         
         //All the different event codes
         public static byte PARSECMESSAGE_FLAG = 0xAE;
@@ -28,75 +28,75 @@ namespace midiParsec
         //Getters
         public byte[] GetMessage()
         {
-            return message;
+            return _message;
         }
 
         public uint GetTime()
         {
-            return time;
+            return _time;
         }  
 
         public byte GetDeviceAddress()
         {
-            return message[1];
+            return _message[1];
         }
 
         public byte GetLength()
         {
-            return (byte)(4 + message[2]);
+            return (byte)(4 + _message[2]);
         }
 
         public byte GetEventCode()
         {
-            return message[3];
+            return _message[3];
         }
 
         public byte GetData()
         {
-            return message[4];
+            return _message[4];
         }
 
         public uint GetSilentData()
         {
-            return silentData;
+            return _silentData;
         }
 
         //Debug print method
         public void Print()
         {
-            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}  Time:{4}", message[0], message[1], message[2], message[3], time);
+            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}  Time:{4}", _message[0], _message[1], _message[2], _message[3], _time);
         }
 
         //PARSEC message class
-        public ParsecMessage(byte device, byte code, byte[] data, uint _time, uint _silentData)
+        public ParsecMessage(byte device, byte code, byte[] data, uint time, uint silentData)
         {   
             //If no data, length = 0
             if(data == null)
             {
-                message = new byte[4];
+                _message = new byte[4];
             }
             //Else length = data.Length
             else {
-                message = new byte[4 + data.Length];
+                _message = new byte[4 + data.Length];
             }
 
             //midi dt
-            time = _time;
+            _time = time;
             //Data for silent events
-            silentData = _silentData;
+            _silentData = silentData;
 
             //Set actual bytes of message
-            message[0] = PARSECMESSAGE_FLAG;
-            message[1] = device;
-            message[2] = (byte)(message.Length - 4);
-            message[3] = code;
+            _message[0] = PARSECMESSAGE_FLAG;
+            _message[1] = device;
+            _message[2] = (byte)(_message.Length - 4);
+            _message[3] = code;
             
             //Append data array
             if(data != null) 
             {
-                for(int i = 4; i < message.Length; i++)
+                for(int i = 4; i < _message.Length; i++)
                 {
-                    message[i] = data[i - 4];
+                    _message[i] = data[i - 4];
                 }
             }
             

@@ -5,72 +5,72 @@ namespace midiParsec
     // EventList is a special implementation of a queue which represents a midi track
     class EventQueue
     {
-        private int size;
-        private EventNode front;
-        private EventNode end;
+        private int _size;
+        private EventNode _front;
+        private EventNode _end;
 
         public EventQueue() 
         {
-            front = end = null;
-            size = 0;
+            _front = _end = null;
+            _size = 0;
         }
 
         //Insert an event at the end of the queue
         public void EnqueueEvent(byte device, byte code, byte[] data, uint time, uint silentData)
         {
             EventNode node = new EventNode(device, code, data, time, silentData, null);
-            if(size == 0)
+            if(_size == 0)
             {
-                front = end = node;
+                _front = _end = node;
             }
             else {
-                end.next = node;
-                end = end.next;
+                _end.Next = node;
+                _end = _end.Next;
             } 
-            size++;
+            _size++;
         }
 
         // Dequeue an event and return its contents as a tuple
         public ParsecMessage DequeueEvent()
         {
-            if(size == 0)
+            if(_size == 0)
             {
                 return null;
             }
             else
             {
-                EventNode toReturn = front;
-                front = front.next;
-                if(size == 1)
+                EventNode toReturn = _front;
+                _front = _front.Next;
+                if(_size == 1)
                 {
-                    end = null;
+                    _end = null;
                 }
-                size--;
-                return toReturn.message;
+                _size--;
+                return toReturn.Message;
             }
         }
 
         //Debugging print function
         public void Print()
         {
-            EventNode current = front;
+            EventNode current = _front;
 
             while(current != null)
             {
-                current.message.Print();
-                current = current.next;
+                current.Message.Print();
+                current = current.Next;
             }
         }
 
         //Custom Node class, wraps around a PARSEC message
         private class EventNode 
         {
-            public EventNode next;
-            public ParsecMessage message;
-            public EventNode(byte device, byte code, byte[] data, uint _time, uint _silentData, EventNode _next) 
+            public EventNode Next;
+            public ParsecMessage Message;
+            public EventNode(byte device, byte code, byte[] data, uint time, uint silentData, EventNode next) 
             {
-                message = new ParsecMessage(device, code, data, _time, _silentData);
-                next = _next;
+                Message = new ParsecMessage(device, code, data, time, silentData);
+                Next = next;
             }
         }
     }
