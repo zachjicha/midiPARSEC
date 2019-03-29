@@ -22,7 +22,7 @@ namespace midiParsec
 
             // Parse the midi file
             Console.WriteLine("Parsing {0}...", args[1]);
-            Sequence _sequence = new Sequence(args[1]);
+            Sequence sequence = new Sequence(args[1]);
             Console.WriteLine("{0} successfully parsed!", args[1]);
 
             // Debug print the sequence
@@ -30,15 +30,15 @@ namespace midiParsec
 
             //Make arduino object
             Console.WriteLine("Opening serial comms with Arduino...");
-            Arduino _arduino = new Arduino(args[0]);
+            Arduino arduino = new Arduino(args[0]);
 
             //Open serial port to arduino
-            _arduino.OpenComms();
+            arduino.OpenComms();
             Console.WriteLine("Comms established! Ready to play...");
 
             //Idle all devices
             Console.WriteLine("All devices idling! Press ENTER to begin...");
-            _arduino.WriteParsecMessage(ParsecMessage.AllDevicesIdle);
+            arduino.WriteParsecMessage(ParsecMessage.AllDevicesIdle);
             
             //Wait for user to press enter
             while(true)
@@ -52,10 +52,10 @@ namespace midiParsec
 
             //Standby all devices
             Console.WriteLine("All devices standing by...");
-            _arduino.WriteParsecMessage(ParsecMessage.AllDevicesStandby);
+            arduino.WriteParsecMessage(ParsecMessage.AllDevicesStandby);
 
             //Tell the arduino to begin the sequence
-            _arduino.WriteParsecMessage(ParsecMessage.SequenceBeginMessage);
+            arduino.WriteParsecMessage(ParsecMessage.SequenceBeginMessage);
 
             Console.WriteLine("Now playing! Press ENTER again to stop...");
 
@@ -67,7 +67,7 @@ namespace midiParsec
             long currentMicros = elapsedTicks/10;
 
             //Intiialize sequence with correct start time
-            _sequence.InitializeStartTimes(currentMicros);
+            sequence.InitializeStartTimes(currentMicros);
 
             //Loop until sequence is done
             while(true)
@@ -77,13 +77,13 @@ namespace midiParsec
                 currentMicros = elapsedTicks/10;
 
                 //Traverse the sequence and check for pending midi events
-                _sequence.TraverseSequence(currentMicros, _arduino);
+                sequence.TraverseSequence(currentMicros, arduino);
              
                 //Check if no tracks are left (sequence is done)
-                if(_sequence.GetTracksLeft() == 0)
+                if(sequence.GetTracksLeft() == 0)
                 {
                     //Send the sequence end message and break from the loop
-                    _arduino.WriteParsecMessage(ParsecMessage.SequenceEndMessage);
+                    arduino.WriteParsecMessage(ParsecMessage.SequenceEndMessage);
                     break;
                 }
 
@@ -93,14 +93,14 @@ namespace midiParsec
                     //Exit on enter
                     if(Console.ReadKey().Key == ConsoleKey.Enter)
                     {
-                        _arduino.WriteParsecMessage(ParsecMessage.SequenceEndMessage);
+                        arduino.WriteParsecMessage(ParsecMessage.SequenceEndMessage);
                         break;
                     }
                 }
             }
             //Close comms with arduino
             Console.WriteLine("Closing comms...");
-            _arduino.CloseComms();
+            arduino.CloseComms();
             Console.WriteLine("Comms closed! Exiting...");
         }
     }
