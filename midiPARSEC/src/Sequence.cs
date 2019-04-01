@@ -7,19 +7,19 @@ namespace midiParsec
     // Each track in the sequence is stored as a queue in the list
     class Sequence
     { 
-        private int numberOfTracks;
-        private double clocks;
-        private string filename;
-        private TrackList trackList;
-        private long[] eventStartTimes;
-        private ParsecMessage[] currentEvents;
-        private double microsPerTick;
-        private int tracksLeft;
+        private int _numberOfTracks;
+        private double _clocks;
+        private string _fileName;
+        private TrackList _trackList;
+        private long[] _eventStartTimes;
+        private ParsecMessage[] _currentEvents;
+        private double _microsPerTick;
+        private int _tracksLeft;
 
-        public Sequence(string _filename) {
-            numberOfTracks = 0;
-            filename = _filename;
-            trackList = new TrackList();
+        public Sequence(string fileName) {
+            _numberOfTracks = 0;
+            _fileName = fileName;
+            _trackList = new TrackList();
             try
             {
                 PopulateSequence();
@@ -29,22 +29,23 @@ namespace midiParsec
                 throw new FileNotFoundException("\nMidi file not found...", e);
             }
 
-            tracksLeft = numberOfTracks;
-            eventStartTimes = new long[numberOfTracks];
-            currentEvents = new ParsecMessage[numberOfTracks];
-            microsPerTick = 500000/clocks;
+            _tracksLeft = _numberOfTracks;
+            _eventStartTimes = new long[_numberOfTracks];
+            _currentEvents = new ParsecMessage[_numberOfTracks];
+            _microsPerTick = 500000/_clocks;
 
-            for(int i = 0; i < numberOfTracks; i++)
+            //Populate the current events array by getting the first event from each track
+            for(int i = 0; i < _numberOfTracks; i++)
             {
-                currentEvents[i] = GetNextEvent(i);
+                _currentEvents[i] = GetNextEvent(i);
             }
         }
 
         public void InitializeStartTimes(long startTime)
         {
-            for(int i = 0; i < numberOfTracks; i++)
+            for(int i = 0; i < _numberOfTracks; i++)
             {
-                eventStartTimes[i] = startTime;
+                _eventStartTimes[i] = startTime;
             }
         }
 
@@ -52,44 +53,44 @@ namespace midiParsec
         {
             double tempConversion = 0;
             bool tempoEncountered = false;
-            for(int i = 0; i < numberOfTracks; i++)
+            for(int i = 0; i < _numberOfTracks; i++)
             {
-                if(currentEvents[i] == null)
+                if(_currentEvents[i] == null)
                 {
                     continue;
                 }
                     
 
-                if((currentTime - eventStartTimes[i]) >= (microsPerTick * currentEvents[i].GetTime()))
+                if((currentTime - _eventStartTimes[i]) >= (_microsPerTick * _currentEvents[i].GetTime()))
                 {
                     //Check if event is a "silent event" (one the arduino doesn't need to know about, but is still an event)
-                    if((currentEvents[i].GetEventCode() & 0xF0) == 0xC0)
+                    if((_currentEvents[i].GetEventCode() & 0xF0) == 0xC0)
                     {
                         
-                        if(currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_EOT) 
+                        if(_currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_EOT) 
                         {
-                            tracksLeft--;
-                            currentEvents[i] = null;
+                            _tracksLeft--;
+                            _currentEvents[i] = null;
                         }
                         else 
                         {
                             //Tempo change event
-                            if(currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_TEMPO)
+                            if(_currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_TEMPO)
                             {   
-                                tempConversion = currentEvents[i].GetSilentData()/clocks;
+                                tempConversion = _currentEvents[i].GetSilentData()/_clocks;
                                 tempoEncountered = true;
                             }
-                            currentEvents[i] = GetNextEvent(i);
-                            eventStartTimes[i] = currentTime;
+                            _currentEvents[i] = GetNextEvent(i);
+                            _eventStartTimes[i] = currentTime;
                         }
 
                         
                     }
                     else 
                     {
-                        arduino.WriteParsecMessage(currentEvents[i]);
-                        currentEvents[i] = GetNextEvent(i);
-                        eventStartTimes[i] = currentTime;
+                        arduino.WriteParsecMessage(_currentEvents[i]);
+                        _currentEvents[i] = GetNextEvent(i);
+                        _eventStartTimes[i] = currentTime;
                         
                     }
                 }
@@ -97,40 +98,40 @@ namespace midiParsec
 
             if(tempoEncountered)
             {
-                microsPerTick = tempConversion;
+                _microsPerTick = tempConversion;
             }
         }
 
         //Getters
         public int GetTracksLeft()
         {
-            return tracksLeft;
+            return _tracksLeft;
         }
 
         public ParsecMessage GetNextEvent(int track)
         {
-            return trackList.GetTrack(track).DequeueEvent();
+            return _trackList.GetTrack(track).DequeueEvent();
         }
 
         public double GetClocks()
         {
-            return clocks;
+            return _clocks;
         }
 
         public int GetNumberOfTracks()
         {
-            return numberOfTracks;
+            return _numberOfTracks;
         }
 
         //Debug print methods
         public void Print()
         {
-            trackList.Print();
+            _trackList.Print();
         }
 
         public void Print(int track)
         {
-            trackList.Print(track);
+            _trackList.Print(track);
         }
 
         // Class needed for parsing midi variable length values 
@@ -182,11 +183,11 @@ namespace midiParsec
         public void PopulateSequence()
         {
 
-            byte[] bytes = File.ReadAllBytes(filename);
+            byte[] bytes = File.ReadAllBytes(_fileName);
             //Get the number of tracks
-            numberOfTracks = ByteArrayToUnsignedInt(bytes, 10, 11);
+            _numberOfTracks = ByteArrayToUnsignedInt(bytes, 10, 11);
             //Get the pulses per quarter note
-            clocks = ByteArrayToUnsignedInt(bytes, 12, 13);
+            _clocks = ByteArrayToUnsignedInt(bytes, 12, 13);
 
             //Variable that tracks the index of the first byte of the current track
             //Starts at 14 since the header chunk is always 14 bytes long
@@ -199,7 +200,7 @@ namespace midiParsec
             int isRunningStatus = 0;
 
             //Loop through each track
-            for(int i = 0; i < numberOfTracks; i++) 
+            for(int i = 0; i < _numberOfTracks; i++) 
             {
 
                 //Check to make sure its a track chunk
@@ -213,7 +214,7 @@ namespace midiParsec
 
                 //Make a queue that represents the current track
                 EventQueue currentTrack = new EventQueue();
-                trackList.AppendTrack(currentTrack);
+                _trackList.AppendTrack(currentTrack);
 
                 //Add some events to the beginning for calibration and timing purposes
                 currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 0, 0);

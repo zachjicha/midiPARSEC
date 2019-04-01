@@ -9,17 +9,17 @@ namespace midiParsec
     class Arduino
     {
 
-        private SerialPort commsPort;
+        private SerialPort _commsPort;
 
         public Arduino(string port)
         {
             //Open serial port with baud rate 9600
-            commsPort = new SerialPort(port, 9600);
+            _commsPort = new SerialPort(port, 9600);
             //This option ensures the arduino restarts when we run the program
-            commsPort.DtrEnable = true;
+            _commsPort.DtrEnable = true;
             //Default timeouts half a second, don't really matter
-            commsPort.ReadTimeout = 500;
-            commsPort.WriteTimeout = 500;
+            _commsPort.ReadTimeout = 500;
+            _commsPort.WriteTimeout = 500;
         }
         
         //Handshake with arduino to open comms
@@ -33,12 +33,12 @@ namespace midiParsec
             byte[] queryByte = {0x7F};
 
             //Query the arduino to make sure it is ready
-            commsPort.Write(queryByte, 0, 1);
+            _commsPort.Write(queryByte, 0, 1);
 
             //Wait for the Response from the Arduino to indicate it is ready
             while(waitingForResponse)
             {
-                if(commsPort.ReadByte() == 0x7F)
+                if(_commsPort.ReadByte() == 0x7F)
                 {
                     waitingForResponse = false;
                 }
@@ -49,7 +49,7 @@ namespace midiParsec
         public void OpenComms()
         {
             //OPen the port
-            commsPort.Open();
+            _commsPort.Open();
             Console.WriteLine("Waiting for arduino to restart...");
 
             //Opening the serial port causes the arduino to restart, so wait a second for it to do that
@@ -64,14 +64,14 @@ namespace midiParsec
         public void CloseComms()
         {
             //Close the port
-            commsPort.Close();
+            _commsPort.Close();
         } 
 
         //Method to write the bytes of a PARSEC message to the serial port
         public void WriteParsecMessage(ParsecMessage message)
         {
             //Write the message bytes
-            commsPort.Write(message.GetMessage(), 0, message.GetLength());
+            _commsPort.Write(message.GetMessage(), 0, message.GetLength());
         }
     }
 }
