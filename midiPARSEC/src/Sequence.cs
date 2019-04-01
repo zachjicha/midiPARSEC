@@ -137,19 +137,19 @@ namespace midiParsec
         // Class needed for parsing midi variable length values 
         private class VariableLengthValue
         {
-            public uint numberOfBytes;
-            public uint value;
+            public uint NumberOfBytes;
+            public uint Value;
 
             public VariableLengthValue(byte[] bytes, int start)
             {
-                numberOfBytes = 0;
-                value = 0;
+                NumberOfBytes = 0;
+                Value = 0;
                 int index = start;
 
                 while(true)
                 {
-                    value = (uint)((value << 7) + (bytes[index] & 0x7F));
-                    numberOfBytes++;
+                    Value = (uint)((Value << 7) + (bytes[index] & 0x7F));
+                    NumberOfBytes++;
                     //If first bit is 0, we are done
                     if((bytes[index] & 0x80) != 0x80)
                     {
@@ -247,8 +247,6 @@ namespace midiParsec
                 while(pairStartIndex < chunkLength + trackStartIndex + 8) 
                 {
 
-                    //printf("%d\n", pairStartIndex);
-
                     //Here are the members of the event we will create
                     byte eventDevice = (byte)(i+1);
                     byte eventCode = 0;
@@ -258,10 +256,10 @@ namespace midiParsec
                     
                     //Set the members of the event
                     VariableLengthValue deltaRead = new VariableLengthValue(bytes, pairStartIndex);
-                    eventTime = deltaRead.value + ignoredDT;
+                    eventTime = deltaRead.Value + ignoredDT;
 
                     //eventStartIndex is the index of the first byte of the event in the current delta time/event pair
-                    int eventStartIndex = (int)(pairStartIndex + deltaRead.numberOfBytes);
+                    int eventStartIndex = (int)(pairStartIndex + deltaRead.NumberOfBytes);
 
                     //If this condition is true, then it is a meta event
                     if(bytes[eventStartIndex] == 0xFF) 
@@ -304,7 +302,7 @@ namespace midiParsec
                             //Length of the Length (how many bytes were used to store the length)
                             //The current eventStartIndex
                             //2 (1 is for the byte that marks the event as meta, 1 for the type of meta event)
-                            nextPairStartIndex = (int)(variableLengthRead.value + variableLengthRead.numberOfBytes + eventStartIndex + 2);
+                            nextPairStartIndex = (int)(variableLengthRead.Value + variableLengthRead.NumberOfBytes + eventStartIndex + 2);
                             //Skip the rest of this loop
                             pairStartIndex = nextPairStartIndex;
                             ignoredDT = eventTime;
@@ -323,7 +321,7 @@ namespace midiParsec
                         //Length of the Length (how many bytes were used to store the length)
                         //The current eventStartIndex
                         //1 (for the byte that marks the event as SYSEX)
-                        nextPairStartIndex = (int)(variableLengthRead.value + variableLengthRead.numberOfBytes + eventStartIndex + 1);
+                        nextPairStartIndex = (int)(variableLengthRead.Value + variableLengthRead.NumberOfBytes + eventStartIndex + 1);
                         //Skip the rest of this loop
                         pairStartIndex = nextPairStartIndex;
                         ignoredDT = eventTime;
