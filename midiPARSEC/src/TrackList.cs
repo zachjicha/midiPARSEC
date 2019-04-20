@@ -68,9 +68,9 @@ namespace midiParsec
             int i = 0;
             while(current != null)
             {
-                Console.WriteLine("Track: {0}", i);
                 if(i == track)
-                {
+                {   
+                    Console.WriteLine("Track: {0}", i);
                     current.Track.Print();
                     break;
                 }

@@ -26,7 +26,7 @@ namespace midiParsec
             Console.WriteLine("{0} successfully parsed!", args[1]);
 
             // Debug print the sequence
-            //sequence.print();
+            //sequence.Print(0);
 
             //Make arduino object
             Console.WriteLine("Opening serial comms with Arduino...");

@@ -60,7 +60,7 @@ namespace midiParsec
                     continue;
                 }
                     
-
+                
                 if((currentTime - _eventStartTimes[i]) >= (_microsPerTick * _currentEvents[i].GetTime()))
                 {
                     //Check if event is a "silent event" (one the arduino doesn't need to know about, but is still an event)
@@ -80,6 +80,7 @@ namespace midiParsec
                                 tempConversion = _currentEvents[i].GetSilentData()/_clocks;
                                 tempoEncountered = true;
                             }
+
                             _currentEvents[i] = GetNextEvent(i);
                             _eventStartTimes[i] = currentTime;
                         }
@@ -87,7 +88,7 @@ namespace midiParsec
                         
                     }
                     else 
-                    {
+                    {   
                         arduino.WriteParsecMessage(_currentEvents[i]);
                         _currentEvents[i] = GetNextEvent(i);
                         _eventStartTimes[i] = currentTime;
@@ -95,7 +96,7 @@ namespace midiParsec
                     }
                 }
             }
-
+            
             if(tempoEncountered)
             {
                 _microsPerTick = tempConversion;
