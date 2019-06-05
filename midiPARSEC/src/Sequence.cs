@@ -67,7 +67,7 @@ namespace midiParsec
                     if((_currentEvents[i].GetEventCode() & 0xF0) == 0xC0)
                     {
                         
-                        if(_currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_EOT) 
+                        if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_EOT) 
                         {
                             _tracksLeft--;
                             _currentEvents[i] = null;
@@ -75,9 +75,9 @@ namespace midiParsec
                         else 
                         {
                             //Tempo change event
-                            if(_currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_TEMPO)
+                            if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_TEMPO)
                             {   
-                                tempConversion = _currentEvents[i].GetSilentData()/_clocks;
+                                tempConversion = _currentEvents[i].GetConductorData()/_clocks;
                                 tempoEncountered = true;
                             }
 
@@ -218,12 +218,12 @@ namespace midiParsec
                 _trackList.AppendTrack(currentTrack);
 
                 //Add some events to the beginning for calibration and timing purposes
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 0, 0);
+                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EC_DEVICE_NOTEOFF, null, 0, 0);
                 byte[] calibrationNote = {72};
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEON, calibrationNote, 0, 0);
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 750, 0);
+                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EC_DEVICE_NOTEON, calibrationNote, 0, 0);
+                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EC_DEVICE_NOTEOFF, null, 750, 0);
                 //Wait a little
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 5000, 0);
+                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EC_DEVICE_NOTEOFF, null, 5000, 0);
 
                 //Length of the data of the chunk
                 int chunkLength = ByteArrayToUnsignedInt(bytes, trackStartIndex+4, trackStartIndex+7);
@@ -276,7 +276,7 @@ namespace midiParsec
                         {
                             //This is an EOT event
                             eventData = null;
-                            eventCode = ParsecMessage.EVENTCODE_SILENT_EOT;
+                            eventCode = ParsecMessage.EC_CONDUCTOR_EOT;
                             //Record the length of the dt/event pair
                             //EOT event is always 3 long
                             nextPairStartIndex = 3 + eventStartIndex;
@@ -288,7 +288,7 @@ namespace midiParsec
                             uint tempo = (uint)(ByteArrayToUnsignedInt(bytes, eventStartIndex+3, eventStartIndex+5));
                             //int tempo = 500000;
                             eventSilentData = tempo;
-                            eventCode = ParsecMessage.EVENTCODE_SILENT_TEMPO;
+                            eventCode = ParsecMessage.EC_CONDUCTOR_TEMPO;
                             //Record the length of the dt/event pair
                             //Tempo event is always 6 long
                             nextPairStartIndex = 6 + eventStartIndex;
@@ -366,7 +366,7 @@ namespace midiParsec
                             {   
                                 //Note off message
                                 eventData = null;
-                                eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEOFF;
+                                eventCode = ParsecMessage.EC_DEVICE_NOTEOFF;
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
                                 isRunningStatus = 1;
@@ -382,13 +382,13 @@ namespace midiParsec
                                 {
                                     //Velocity of zero is really a note off event to sustain running status
                                     eventData = null;
-                                    eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEOFF;
+                                    eventCode = ParsecMessage.EC_DEVICE_NOTEOFF;
                                 }
                                 else 
                                 {
                                     eventData = new byte[1];
                                     eventData[0] = pitchIndex;
-                                    eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEON;
+                                    eventCode = ParsecMessage.EC_DEVICE_NOTEON;
                                 }
                                 //Record the length of the dt/event pair
                                 nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
