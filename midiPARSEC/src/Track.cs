@@ -20,6 +20,13 @@ namespace midiParsec
             _trackQueue.Enqueue(new ParsecMessage(device, code, data, time, conductorData));
         }
 
+        //Insert an event at the end of the queue
+        public void EnqueueEvent(ParsecMessage message)
+        {
+            //Make a new message and enqueue it
+            _trackQueue.Enqueue(message);
+        }
+
         // Dequeue an event and return its contents as a tuple
         public ParsecMessage DequeueEvent()
         {

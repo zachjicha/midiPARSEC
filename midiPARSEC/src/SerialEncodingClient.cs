@@ -80,7 +80,7 @@ namespace midiParsec
                 sequence.TraverseSequence(currentMicros, arduino);
              
                 //Check if no tracks are left (sequence is done)
-                if(sequence.GetTracksLeft() == 0)
+                if(sequence.GetRemainingTracks() == 0)
                 {
                     //Send the sequence end message and break from the loop
                     arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_END);
