@@ -167,6 +167,11 @@ namespace midiParsec
             return _sequenceList[track].DequeueEvent();
         }
 
+        public void Print(int track) 
+        {
+            _sequenceList[track].Print();
+        }
+
         private uint ByteArrayToUnsignedInt(byte[] bytes, uint start, uint end)
         {
             if(start > end)
