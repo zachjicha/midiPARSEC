@@ -9,6 +9,11 @@ namespace midiParsec
     class Arduino
     {
 
+        //Bytes used in handshake with arduino
+        //Not a bad choice of numbers my dude
+        private const byte QUERY_BYTE    = 0x90;
+        private const byte RESPONSE_BYTE = 0x26;
+
         private SerialPort _commsPort;
 
         public Arduino(string port)
@@ -30,7 +35,7 @@ namespace midiParsec
             // The two stages are named Query, Response
 
             bool waitingForResponse = true;
-            byte[] queryByte = {0x7F};
+            byte[] queryByte        = {QUERY_BYTE};
 
             //Query the arduino to make sure it is ready
             _commsPort.Write(queryByte, 0, 1);
@@ -38,7 +43,7 @@ namespace midiParsec
             //Wait for the Response from the Arduino to indicate it is ready
             while(waitingForResponse)
             {
-                if(_commsPort.ReadByte() == 0x7F)
+                if(_commsPort.ReadByte() == RESPONSE_BYTE)
                 {
                     waitingForResponse = false;
                 }
