@@ -168,7 +168,7 @@ namespace midiParsec
         }
 
         public void Print(int track) 
-        {
+        {   
             _sequenceList[track].Print();
         }
 
@@ -194,7 +194,7 @@ namespace midiParsec
         }
 
 
-        // Parses the midi file and populates the TrackList
+        //Parses the midi file and populates the TrackList
         //Calls ParseTrack helper method to parse each track
         public void PopulateSequence()
         {
@@ -271,10 +271,12 @@ namespace midiParsec
             //Store message here and then decide whether or not to add it
             ParsecMessage message = new ParsecMessage();
 
+            
+
             //Loop while we are still within the bounds of the track
             while(pairStartIndex < trackLength + trackStartIndex + 8)
             {
-                if(ParseEvent(bytes, ref message, ref pairStartIndex, ref status, ref isRunningStatus, ref ignoredTime))
+                if(ParseEvent(bytes, ref message, ref pairStartIndex, ref status, ref isRunningStatus, ref ignoredTime, ref currentTrack.CumulativeTime))
                 {
                     currentTrack.EnqueueEvent(message);
                 }
@@ -288,7 +290,7 @@ namespace midiParsec
 
         //Parses an event
         private bool ParseEvent(byte[] bytes, ref ParsecMessage message, ref uint pairStartIndex, 
-                                ref byte status, ref bool isRunningStatus, ref uint ignoredTime)
+                                ref byte status, ref bool isRunningStatus, ref uint ignoredTime, ref uint cumulativeTime)
         {
             
             //Here are the members of the event we will create
@@ -340,9 +342,11 @@ namespace midiParsec
                         //Update new pair start index
                         //Tempo events are always 6 bytes long
                         pairStartIndex = 6 + eventStartIndex;
-                        ignoredTime    = 0;
                         //Add the event to the conductor track
-                        EnqueueConductorEvent(eventCode, conductorTime, conductorData);
+                        EnqueueConductorEvent(eventCode, cumulativeTime + conductorTime, conductorData);
+                        //Technically, we are ignoring this event, since it goes in the conductor track
+                        //So, we need to account for its time later
+                        ignoredTime    = conductorTime;
                         //Return false becuase we handle this in the conductor track
                         return false;
                     //Default case is all meta events we dont care about

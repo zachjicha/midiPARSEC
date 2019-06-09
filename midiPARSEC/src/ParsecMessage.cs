@@ -30,7 +30,7 @@ namespace midiParsec
         
         //Private members of parsecmessage
         private byte[] _message;
-        private uint   _time;
+        private uint   _conductorTime;
         private uint   _conductorData;
 
         //Default constructor
@@ -53,7 +53,7 @@ namespace midiParsec
             }
 
             //midi dt
-            _time = time;
+            _conductorTime = time;
             //Data for silent events
             _conductorData = conductorData;
 
@@ -82,7 +82,7 @@ namespace midiParsec
 
         public uint GetTime()
         {
-            return _time;
+            return _conductorTime;
         }  
 
         public byte GetDeviceAddress()
@@ -113,7 +113,7 @@ namespace midiParsec
         //Debug print method
         public void Print()
         {
-            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}  Time:{4}", _message[0], _message[1], _message[2], _message[3], _time);
+            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}  Time:{4} Data:{5}", _message[0], _message[1], _message[2], _message[3], _conductorTime, _conductorData);
         }
     }
 }

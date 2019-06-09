@@ -7,10 +7,12 @@ namespace midiParsec
     class Track
     {
         private Queue<ParsecMessage> _trackQueue;
+        public  uint CumulativeTime;
 
         public Track() 
         {
-            _trackQueue = new Queue<ParsecMessage>();
+            _trackQueue    = new Queue<ParsecMessage>();
+            CumulativeTime = 0;
         }
 
         //Insert an event at the end of the queue
@@ -18,6 +20,8 @@ namespace midiParsec
         {
             //Make a new message and enqueue it
             _trackQueue.Enqueue(new ParsecMessage(device, code, data, time, conductorData));
+            //Add time to to the cumulative sum
+            CumulativeTime += time;
         }
 
         //Insert an event at the end of the queue
@@ -25,6 +29,8 @@ namespace midiParsec
         {
             //Make a new message and enqueue it
             _trackQueue.Enqueue(message);
+            //Add time to to the cumulative sum
+            CumulativeTime += message.GetTime();
         }
 
         // Dequeue an event and return its contents as a tuple
