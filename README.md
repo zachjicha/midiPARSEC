@@ -8,4 +8,4 @@ For instructions on setting up and running the code, head over to the [installat
 
 Visit the wiki for more information.
 
-Here is an example of the code running: [https://drive.google.com/open?id=17gXkXA7Wc68Y1rxlGuitD8PFpD-eZVz4](https://drive.google.com/open?id=17gXkXA7Wc68Y1rxlGuitD8PFpD-eZVz4)
+Here is an example of the code running: [https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL](https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL)
