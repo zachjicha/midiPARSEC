@@ -9,7 +9,7 @@ using System.Windows.Input;
 namespace midiParsec
 {
     // Serial Encoding Client component, main class of PARSEC
-    class SerialEncodingClient
+    class midiPARSEC
     {
         static void Main(string[] args)
         {
