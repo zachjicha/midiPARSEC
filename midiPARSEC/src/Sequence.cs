@@ -102,8 +102,6 @@ namespace midiParsec
 
         public void TraverseSequence(long currentTime, Arduino arduino)
         {
-            double tempConversion   = 0;
-            bool   tempoEncountered = false;
 
             for(int i = 0; i < _sequenceList.Count; ++i)
             {
@@ -115,7 +113,10 @@ namespace midiParsec
                 
                 if((currentTime - _eventStartTimes[i]) >= (_usecPerTick * _currentEvents[i].GetTime()))
                 {
-                    //Check if event is a "silent event" (one the arduino doesn't need to know about, but is still an event)
+
+                    //Console.Write("Track: {0} Time:{1}  ", i, currentTime);
+                    //_currentEvents[i].Print();
+                    //Check if event is a "conductor event" (one the arduino doesn't need to know about, but is still an event)
                     if((_currentEvents[i].GetEventCode() & 0xF0) == 0xC0)
                     {
                         
@@ -129,8 +130,7 @@ namespace midiParsec
                             //Tempo change event
                             if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_TEMPO)
                             {   
-                                tempConversion   = _currentEvents[i].GetConductorData()/_clockDivision;
-                                tempoEncountered = true;
+                                _usecPerTick   = _currentEvents[i].GetConductorData()/_clockDivision;
                             }
 
                             _currentEvents[i]   = GetNextEvent(i);
@@ -148,11 +148,6 @@ namespace midiParsec
                         
                     }
                 }
-            }
-            
-            if(tempoEncountered)
-            {
-                _usecPerTick = tempConversion;
             }
         }
 
@@ -343,7 +338,8 @@ namespace midiParsec
                         //Tempo events are always 6 bytes long
                         pairStartIndex = 6 + eventStartIndex;
                         //Add the event to the conductor track
-                        EnqueueConductorEvent(eventCode, cumulativeTime + conductorTime, conductorData);
+                        //5750 is the time spent calibrating
+                        EnqueueConductorEvent(eventCode, cumulativeTime + conductorTime - 5750, conductorData);
                         //Technically, we are ignoring this event, since it goes in the conductor track
                         //So, we need to account for its time later
                         ignoredTime    = conductorTime;
