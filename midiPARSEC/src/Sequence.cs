@@ -113,9 +113,6 @@ namespace midiParsec
                 
                 if((currentTime - _eventStartTimes[i]) >= (_usecPerTick * _currentEvents[i].GetTime()))
                 {
-
-                    //Console.Write("Track: {0} Time:{1}  ", i, currentTime);
-                    //_currentEvents[i].Print();
                     //Check if event is a "conductor event" (one the arduino doesn't need to know about, but is still an event)
                     if((_currentEvents[i].GetEventCode() & 0xF0) == 0xC0)
                     {

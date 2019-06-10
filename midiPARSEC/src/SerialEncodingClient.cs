@@ -23,7 +23,6 @@ namespace midiParsec
             // Parse the midi file
             Console.WriteLine("Parsing {0}...", args[1]);
             Sequence sequence = new Sequence(args[1]);
-            sequence.Print(0);
             Console.WriteLine("{0} successfully parsed!", args[1]);
 
             // Debug print the sequence
