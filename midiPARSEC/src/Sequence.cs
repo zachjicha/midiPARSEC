@@ -51,6 +51,7 @@ namespace midiParsec
                 NumberOfBytes = 0;
                 Value         = 0;
 
+                //Read in bytes, ignoring first bit
                 while(true)
                 {
                     Value = (uint)((Value << 7) + (bytes[start] & 0x7F));
@@ -69,6 +70,7 @@ namespace midiParsec
             _fileName     = fileName;
             _sequenceList = new List<Track>();
 
+            //Parse the midi file
             try
             {
                 PopulateSequence();
@@ -92,6 +94,7 @@ namespace midiParsec
             }
         }
 
+        //Set the start times to the current time
         public void InitializeStartTimes(long startTime)
         {
             for(int i = 0; i < _sequenceList.Count; ++i)
@@ -100,15 +103,15 @@ namespace midiParsec
             }
         }
 
+        //Loop through each current event and see if
+        //enough time has passed for it to occur
         public void TraverseSequence(long currentTime, Arduino arduino)
         {
 
             for(int i = 0; i < _sequenceList.Count; ++i)
             {
-                if(_currentEvents[i] == null)
-                {
-                    continue;
-                }
+                //Skip if this track is done
+                if(_currentEvents[i] == null) continue;
                     
                 
                 if((currentTime - _eventStartTimes[i]) >= (_usecPerTick * _currentEvents[i].GetTime()))
@@ -127,19 +130,24 @@ namespace midiParsec
                             //Tempo change event
                             if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_TEMPO)
                             {   
+                                //Update tempo
                                 _usecPerTick   = _currentEvents[i].GetConductorData()/_clockDivision;
                             }
-
+                            
+                            //Update the current event
                             _currentEvents[i]   = GetNextEvent(i);
                             _eventStartTimes[i] = currentTime;
                         }
 
                         
                     }
+                    //All other events
                     else 
-                    {   
+                    {      
+                        //Write the event to serial
                         arduino.WriteParsecMessage(_currentEvents[i]);
 
+                        //Update the current event
                         _currentEvents[i]   = GetNextEvent(i);
                         _eventStartTimes[i] = currentTime;
                         
@@ -164,6 +172,7 @@ namespace midiParsec
             _sequenceList[track].Print();
         }
 
+        //COnvert a section of an array of bytes to an unsigned int
         private uint ByteArrayToUnsignedInt(byte[] bytes, uint start, uint end)
         {
             if(start > end)
