@@ -21,7 +21,6 @@ namespace midiParsec
             }
 
             // Parse the midi file
-            Console.WriteLine("Parsing {0}...", args[1]);
             Sequence sequence = new Sequence(args[1]);
             Console.WriteLine("{0} successfully parsed!", args[1]);
 
@@ -29,7 +28,6 @@ namespace midiParsec
             //sequence.Print(0);
 
             //Make arduino object
-            Console.WriteLine("Opening serial comms with Arduino...");
             Arduino arduino = new Arduino(args[0]);
 
             //Open serial port to arduino
