@@ -1,25 +1,76 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace midiParsec
 {
-    // Sequence object, stores midi sequences as a linked list of queues
+    // Sequence object, stores midi sequences as a List of tracks
     // Each track in the sequence is stored as a queue in the list
     class Sequence
-    { 
-        private int _numberOfTracks;
-        private double _clocks;
-        private string _fileName;
-        private TrackList _trackList;
-        private long[] _eventStartTimes;
+    {
+        //Special values for midi Decoding
+
+        //Types of events
+        private const byte MIDI_TYPE_META                 = 0xFF;
+        private const byte MIDI_TYPE_SYSEX1               = 0xF0;
+        private const byte MIDI_TYPE_SYSEX2               = 0xF7;
+
+        //Types of Meta events
+        private const byte MIDI_META_TEMPO                = 0x51;
+        private const byte MIDI_META_EOT                  = 0x2F;
+
+        //Types of Channel Messages, which come in 2 flavors:
+        //Mode and voice
+        private const byte MIDI_MODE_FLAG                 = 0xB0;
+        private const byte MIDI_VOICE_NOTE_OFF            = 0x80;
+        private const byte MIDI_VOICE_NOTE_ON             = 0x90;
+        private const byte MIDI_VOICE_POLYPHONIC_PRESSURE = 0xA0;
+        private const byte MIDI_VOICE_PROGRAM_CHANGE      = 0xC0;
+        private const byte MIDI_VOICE_KEY_PRESSURE        = 0xD0;
+        private const byte MIDI_VOICE_PITCH_BEND          = 0xE0;
+
+
+
+        private List<Track>     _sequenceList;
+        private int             _remainingTracks;
+        private double          _clockDivision;
+        private double          _usecPerTick;
         private ParsecMessage[] _currentEvents;
-        private double _microsPerTick;
-        private int _tracksLeft;
+        private long[]          _eventStartTimes;
+        private string          _fileName;
+
+        // Class needed for parsing midi variable length values 
+        private class Varival
+        {
+            public uint NumberOfBytes;
+            public uint Value;
+
+            
+            public Varival(byte[] bytes, uint start)
+            {
+                NumberOfBytes = 0;
+                Value         = 0;
+
+                //Read in bytes, ignoring first bit
+                while(true)
+                {
+                    Value = (uint)((Value << 7) + (bytes[start] & 0x7F));
+                    ++NumberOfBytes;
+                    //If first bit is 0, we are done
+                    if((bytes[start] & 0x80) != 0x80)
+                    {
+                        break;
+                    }
+                    ++start;
+                }
+            }
+        }
 
         public Sequence(string fileName) {
-            _numberOfTracks = 0;
-            _fileName = fileName;
-            _trackList = new TrackList();
+            _fileName     = fileName;
+            _sequenceList = new List<Track>();
+
+            //Parse the midi file
             try
             {
                 PopulateSequence();
@@ -28,149 +79,109 @@ namespace midiParsec
             {
                 throw new FileNotFoundException("\nMidi file not found...", e);
             }
+            
+            //Ignore the conductor track for remaining tracks
+            _remainingTracks = _sequenceList.Count - 1;
+            _eventStartTimes = new long[_sequenceList.Count];
+            _currentEvents   = new ParsecMessage[_sequenceList.Count];
+            _usecPerTick     = 500000/_clockDivision;
 
-            _tracksLeft = _numberOfTracks;
-            _eventStartTimes = new long[_numberOfTracks];
-            _currentEvents = new ParsecMessage[_numberOfTracks];
-            _microsPerTick = 500000/_clocks;
-
-            //Populate the current events array by getting the first event from each track
-            for(int i = 0; i < _numberOfTracks; i++)
+            //Populate the current events array by getting the first 
+            //event from each track
+            for(int i = 0; i < _sequenceList.Count; ++i)
             {
                 _currentEvents[i] = GetNextEvent(i);
             }
         }
 
+        //Set the start times to the current time
         public void InitializeStartTimes(long startTime)
         {
-            for(int i = 0; i < _numberOfTracks; i++)
+            for(int i = 0; i < _sequenceList.Count; ++i)
             {
                 _eventStartTimes[i] = startTime;
             }
         }
 
+        //Loop through each current event and see if
+        //enough time has passed for it to occur
         public void TraverseSequence(long currentTime, Arduino arduino)
         {
-            double tempConversion = 0;
-            bool tempoEncountered = false;
-            for(int i = 0; i < _numberOfTracks; i++)
+
+            for(int i = 0; i < _sequenceList.Count; ++i)
             {
-                if(_currentEvents[i] == null)
-                {
-                    continue;
-                }
+                //Skip if this track is done
+                if(_currentEvents[i] == null) continue;
                     
                 
-                if((currentTime - _eventStartTimes[i]) >= (_microsPerTick * _currentEvents[i].GetTime()))
+                if((currentTime - _eventStartTimes[i]) >= (_usecPerTick * _currentEvents[i].GetTime()))
                 {
-                    //Check if event is a "silent event" (one the arduino doesn't need to know about, but is still an event)
+                    //Check if event is a "conductor event" (one the arduino doesn't need to know about, but is still an event)
                     if((_currentEvents[i].GetEventCode() & 0xF0) == 0xC0)
                     {
                         
-                        if(_currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_EOT) 
+                        if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_EOT) 
                         {
-                            _tracksLeft--;
+                            --_remainingTracks;
                             _currentEvents[i] = null;
                         }
                         else 
                         {
                             //Tempo change event
-                            if(_currentEvents[i].GetEventCode() == ParsecMessage.EVENTCODE_SILENT_TEMPO)
+                            if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_TEMPO)
                             {   
-                                tempConversion = _currentEvents[i].GetSilentData()/_clocks;
-                                tempoEncountered = true;
+                                //Update tempo
+                                _usecPerTick   = _currentEvents[i].GetConductorData()/_clockDivision;
                             }
-
-                            _currentEvents[i] = GetNextEvent(i);
+                            
+                            //Update the current event
+                            _currentEvents[i]   = GetNextEvent(i);
                             _eventStartTimes[i] = currentTime;
                         }
 
                         
                     }
+                    //All other events
                     else 
-                    {   
+                    {      
+                        //Write the event to serial
                         arduino.WriteParsecMessage(_currentEvents[i]);
-                        _currentEvents[i] = GetNextEvent(i);
+
+                        //Update the current event
+                        _currentEvents[i]   = GetNextEvent(i);
                         _eventStartTimes[i] = currentTime;
                         
                     }
                 }
             }
-            
-            if(tempoEncountered)
-            {
-                _microsPerTick = tempConversion;
-            }
         }
 
         //Getters
-        public int GetTracksLeft()
+        public int GetRemainingTracks()
         {
-            return _tracksLeft;
+            return _remainingTracks;
         }
 
         public ParsecMessage GetNextEvent(int track)
         {
-            return _trackList.GetTrack(track).DequeueEvent();
+            return _sequenceList[track].DequeueEvent();
         }
 
-        public double GetClocks()
-        {
-            return _clocks;
+        public void Print(int track) 
+        {   
+            _sequenceList[track].Print();
         }
 
-        public int GetNumberOfTracks()
-        {
-            return _numberOfTracks;
-        }
-
-        //Debug print methods
-        public void Print()
-        {
-            _trackList.Print();
-        }
-
-        public void Print(int track)
-        {
-            _trackList.Print(track);
-        }
-
-        // Class needed for parsing midi variable length values 
-        private class VariableLengthValue
-        {
-            public uint NumberOfBytes;
-            public uint Value;
-
-            public VariableLengthValue(byte[] bytes, int start)
-            {
-                NumberOfBytes = 0;
-                Value = 0;
-                int index = start;
-
-                while(true)
-                {
-                    Value = (uint)((Value << 7) + (bytes[index] & 0x7F));
-                    NumberOfBytes++;
-                    //If first bit is 0, we are done
-                    if((bytes[index] & 0x80) != 0x80)
-                    {
-                        break;
-                    }
-                    index++;
-                
-                }
-            }
-        }
-
-        private int ByteArrayToUnsignedInt(byte[] bytes, int start, int end)
+        //COnvert a section of an array of bytes to an unsigned int
+        private uint ByteArrayToUnsignedInt(byte[] bytes, uint start, uint end)
         {
             if(start > end)
             {
-                return -1;
+                throw new ArgumentOutOfRangeException("Start index comes after End index");
             }
 
-            int sum = 0;
-            for(int i = start; i <= end; i++)
+            uint sum = 0;
+            for(uint i = start; i <= end; ++i)
             {
                 sum = (sum * 256) + bytes[i];
             }
@@ -178,273 +189,331 @@ namespace midiParsec
             return sum;
         }
 
+        private void EnqueueConductorEvent(byte code, uint time, uint conductorData) 
+        {
+            _sequenceList[0].EnqueueEvent(0, code, null, time, conductorData);
+        }
 
-        // Parses the midi file and populates the TrackList
-        // Strap in, the PAR in PARSEC is long
+
+        //Parses the midi file and populates the TrackList
+        //Calls ParseTrack helper method to parse each track
         public void PopulateSequence()
         {
 
-            byte[] bytes = File.ReadAllBytes(_fileName);
+            byte[] bytes       = File.ReadAllBytes(_fileName);
             //Get the number of tracks
-            _numberOfTracks = ByteArrayToUnsignedInt(bytes, 10, 11);
+            uint tracksToParse = ByteArrayToUnsignedInt(bytes, 10, 11);
             //Get the pulses per quarter note
-            _clocks = ByteArrayToUnsignedInt(bytes, 12, 13);
+            _clockDivision     = ByteArrayToUnsignedInt(bytes, 12, 13);
+
+            //Make the conductor track
+            Track conductorTrack = new Track();
+            //Wait so that this track is in line with the others
+            conductorTrack.EnqueueEvent(0, ParsecMessage.EC_CONDUCTOR_NULL, null, 5750, 0);
+            _sequenceList.Add(conductorTrack);
 
             //Variable that tracks the index of the first byte of the current track
             //Starts at 14 since the header chunk is always 14 bytes long
-            int trackStartIndex = 14;
+            uint trackStartIndex = 14;
 
-            //Status is the type of Midi message event, seperate from meta and SYSEX events
-            byte status = 0;
 
-            //Boolean to track whether we are in running status or not
-            int isRunningStatus = 0;
-
-            //Loop through each track
-            for(int i = 0; i < _numberOfTracks; i++) 
+            while(_sequenceList.Count <= tracksToParse) 
             {
+                ParseTrack(bytes, ref trackStartIndex);
+            }
 
-                //Check to make sure its a track chunk
-                if(bytes[trackStartIndex] != 0x4D || bytes[trackStartIndex+1] != 0x54 || bytes[trackStartIndex+2] != 0x72 || bytes[trackStartIndex+3] != 0x6B) 
+            //Insert an EOT event into the conductor track
+            //This will make traversdal of the sequence easier
+            //and will also prevent segfaults due to empty tracks
+            EnqueueConductorEvent(ParsecMessage.EC_CONDUCTOR_EOT, 1, 0);
+        }
+
+        //Parses a track. calls Parse
+        private void ParseTrack(byte[] bytes, ref uint trackStartIndex) 
+        {
+            //Check to make sure its a track chunk
+            //These bytes spell MTrk, which indicate a track chunk
+            if(bytes[trackStartIndex+0] != 0x4D || 
+               bytes[trackStartIndex+1] != 0x54 ||
+               bytes[trackStartIndex+2] != 0x72 ||
+               bytes[trackStartIndex+3] != 0x6B) 
+            {
+               //If not, update trackStartIndex and return
+                trackStartIndex += 8 + ByteArrayToUnsignedInt(bytes, 
+                                                              trackStartIndex+4, 
+                                                              trackStartIndex+7);
+                return;
+            }
+
+            //Middle C (I think)
+            byte[] calibrationNote = {72};
+
+            //Make a new track to sotre events in
+            Track currentTrack = new Track();
+            //Add some events to the beginning for calibration and timing purposes
+            currentTrack.EnqueueEvent((byte)(_sequenceList.Count), ParsecMessage.EC_DEVICE_NOTEOFF, null           , 0   , 0);
+            currentTrack.EnqueueEvent((byte)(_sequenceList.Count), ParsecMessage.EC_DEVICE_NOTEON , calibrationNote, 0   , 0);
+            currentTrack.EnqueueEvent((byte)(_sequenceList.Count), ParsecMessage.EC_DEVICE_NOTEOFF, null           , 750 , 0);
+            currentTrack.EnqueueEvent((byte)(_sequenceList.Count), ParsecMessage.EC_DEVICE_NOTEOFF, null           , 5000, 0);
+
+            //Length of the data of the track
+            uint trackLength = ByteArrayToUnsignedInt(bytes, trackStartIndex+4, trackStartIndex+7);
+
+            
+            //Various variables used in ParseEvent
+            //Start index of the event/dt pair
+            uint pairStartIndex   = trackStartIndex + 8;
+            //Status byte (saved for running status)
+            byte status           = 0;
+            //Are we in running status or not
+            bool isRunningStatus  = false;
+            //Store unaccounted time for later accounting
+            uint ignoredTime      = 0;
+            //Store message here and then decide whether or not to add it
+            ParsecMessage message = new ParsecMessage();
+
+            
+
+            //Loop while we are still within the bounds of the track
+            while(pairStartIndex < trackLength + trackStartIndex + 8)
+            {
+                if(ParseEvent(bytes, ref message, ref pairStartIndex, ref status, ref isRunningStatus, ref ignoredTime, ref currentTrack.CumulativeTime))
                 {
-                    //If not, continue
-                    i--;
-                    trackStartIndex += 8 + ByteArrayToUnsignedInt(bytes, trackStartIndex+4, trackStartIndex+7);
-                    continue;
+                    currentTrack.EnqueueEvent(message);
                 }
+            }
 
-                //Make a queue that represents the current track
-                EventQueue currentTrack = new EventQueue();
-                _trackList.AppendTrack(currentTrack);
+            //Add the track to the sequence
+            _sequenceList.Add(currentTrack);
+            //Update trackStartIndex
+            trackStartIndex = pairStartIndex;
+        }
 
-                //Add some events to the beginning for calibration and timing purposes
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 0, 0);
-                byte[] calibrationNote = {72};
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEON, calibrationNote, 0, 0);
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 750, 0);
-                //Wait a little
-                currentTrack.EnqueueEvent((byte)(i+1), ParsecMessage.EVENTCODE_DEVICE_NOTEOFF, null, 5000, 0);
+        //Parses an event
+        private bool ParseEvent(byte[] bytes, ref ParsecMessage message, ref uint pairStartIndex, 
+                                ref byte status, ref bool isRunningStatus, ref uint ignoredTime, ref uint cumulativeTime)
+        {
+            
+            //Here are the members of the event we will create
+            byte   eventDevice   = (byte)(_sequenceList.Count);
+            byte   eventCode     = 0;
+            byte[] eventData     = null;
+            uint   conductorTime = 0;
+            uint   conductorData = 0;
+            
+            //Read the dt for the current event
+            Varival deltaTime    = new Varival(bytes, pairStartIndex);
+            //Time for this event is the read we just did plus any ignored time
+            conductorTime        = deltaTime.Value + ignoredTime;
+            //Record the start of the devent in the dt/event pair
+            uint eventStartIndex = pairStartIndex + deltaTime.NumberOfBytes;
+            
+            //If the event is a meta event
+            if(bytes[eventStartIndex] == MIDI_TYPE_META)
+            {
+                //Meta events always end running status
+                isRunningStatus = false;
 
-                //Length of the data of the chunk
-                int chunkLength = ByteArrayToUnsignedInt(bytes, trackStartIndex+4, trackStartIndex+7);
+                //Switch over the next byte (type of meta event)
+                switch(bytes[eventStartIndex + 1]) {
+                    case MIDI_META_EOT:
+                        //Set eventCode appropriately
+                        eventCode      = ParsecMessage.EC_CONDUCTOR_EOT;
+                        //Update new pair start index
+                        //EOT events are always 3 bytes long
+                        pairStartIndex = 3 + eventStartIndex;
+                        ignoredTime    = 0;
 
-                //MTrk chunks are split into three main parts: the MTrk tag, length, and data
-                //The data contains the delta time event pairs
-
-                //pairStartIndex is the index of the first byte of a delta time/event pair
-                //it starts at the first byte of the data
-                int pairStartIndex = trackStartIndex + 8;
-
-                //Index of the next event pair
-                int nextPairStartIndex = 0;
-
-                //chunkLength + trackStartIndex + 8 is the first byte of the next chunk
-                //this is since the start of the chunk is s, the header is 8 bytes and the rest is chunkLength bytes
-                //Loop through each dt/event pair
-
-                //This is for dts from ignored events
-                uint ignoredDT = 0;
-
-                while(pairStartIndex < chunkLength + trackStartIndex + 8) 
-                {
-
-                    //Here are the members of the event we will create
-                    byte eventDevice = (byte)(i+1);
-                    byte eventCode = 0;
-                    byte[] eventData = null;
-                    uint eventTime = 0;
-                    uint eventSilentData = 0;
-                    
-                    //Set the members of the event
-                    VariableLengthValue deltaRead = new VariableLengthValue(bytes, pairStartIndex);
-                    eventTime = deltaRead.Value + ignoredDT;
-
-                    //eventStartIndex is the index of the first byte of the event in the current delta time/event pair
-                    int eventStartIndex = (int)(pairStartIndex + deltaRead.NumberOfBytes);
-
-                    //If this condition is true, then it is a meta event
-                    if(bytes[eventStartIndex] == 0xFF) 
-                    {
-                        isRunningStatus = 0;
-
-                        //This byte holds the type of meta event
-                        //It is analogous to status
-                        byte type = bytes[eventStartIndex + 1];
-
-                        //Check the type of meta event
-                        if(type == 0x2F) 
-                        {
-                            //This is an EOT event
-                            eventData = null;
-                            eventCode = ParsecMessage.EVENTCODE_SILENT_EOT;
-                            //Record the length of the dt/event pair
-                            //EOT event is always 3 long
-                            nextPairStartIndex = 3 + eventStartIndex;
-                            ignoredDT = 0;
-                        }
-                        else if(type == 0x51) 
-                        {
-                            //this is a tempo meta event
-                            uint tempo = (uint)(ByteArrayToUnsignedInt(bytes, eventStartIndex+3, eventStartIndex+5));
-                            //int tempo = 500000;
-                            eventSilentData = tempo;
-                            eventCode = ParsecMessage.EVENTCODE_SILENT_TEMPO;
-                            //Record the length of the dt/event pair
-                            //Tempo event is always 6 long
-                            nextPairStartIndex = 6 + eventStartIndex;
-                            ignoredDT = 0;
-                        }
-                        else 
-                        {
-                            //This is for events we dont care about
-                            VariableLengthValue variableLengthRead = new VariableLengthValue(bytes, eventStartIndex + 2);
-                            //The index of ther next event pair is the sum of (in order of adding):
-                            //Length of the event data
-                            //Length of the Length (how many bytes were used to store the length)
-                            //The current eventStartIndex
-                            //2 (1 is for the byte that marks the event as meta, 1 for the type of meta event)
-                            nextPairStartIndex = (int)(variableLengthRead.Value + variableLengthRead.NumberOfBytes + eventStartIndex + 2);
-                            //Skip the rest of this loop
-                            pairStartIndex = nextPairStartIndex;
-                            ignoredDT = eventTime;
-                            continue;
-                        }
-                    }
-
-                    //This case is for system exclusive events, irrelevant
-                    else if(bytes[eventStartIndex] == 0xF0 || bytes[eventStartIndex] == 0xF7) 
-                    {
-                        isRunningStatus = 0;
-                        //Record the length of the dt/event pair
-                        VariableLengthValue variableLengthRead = new VariableLengthValue(bytes, eventStartIndex + 2);
-                        //The index of ther next event pair is the sum of (in order of adding):
+                        //Update message
+                        message = new ParsecMessage(eventDevice,
+                                                    eventCode,
+                                                    null,
+                                                    conductorTime,
+                                                    conductorData);
+                        
+                        //Return true so that the message is added to the track
+                        return true;
+                    case MIDI_META_TEMPO:
+                        //Set eventCode appropriately
+                        eventCode      = ParsecMessage.EC_CONDUCTOR_TEMPO;
+                        //Get the tempo data
+                        conductorData  = ByteArrayToUnsignedInt(bytes, 
+                                                               eventStartIndex + 3,
+                                                               eventStartIndex + 5);
+                        //Update new pair start index
+                        //Tempo events are always 6 bytes long
+                        pairStartIndex = 6 + eventStartIndex;
+                        //Add the event to the conductor track
+                        //5750 is the time spent calibrating
+                        EnqueueConductorEvent(eventCode, cumulativeTime + conductorTime - 5750, conductorData);
+                        //Technically, we are ignoring this event, since it goes in the conductor track
+                        //So, we need to account for its time later
+                        ignoredTime    = conductorTime;
+                        //Return false becuase we handle this in the conductor track
+                        return false;
+                    //Default case is all meta events we dont care about
+                    default:
+                        //Read the length of the meta event data
+                        Varival metaLength = new Varival(bytes, eventStartIndex + 2);
+                        //The index of the next event pair is the sum of (in order of adding):
                         //Length of the event data
                         //Length of the Length (how many bytes were used to store the length)
                         //The current eventStartIndex
-                        //1 (for the byte that marks the event as SYSEX)
-                        nextPairStartIndex = (int)(variableLengthRead.Value + variableLengthRead.NumberOfBytes + eventStartIndex + 1);
-                        //Skip the rest of this loop
-                        pairStartIndex = nextPairStartIndex;
-                        ignoredDT = eventTime;
-                        continue;
-                    }
+                        //2 (1 is for the byte that marks the event as meta, 1 for the type of meta event)
+                        pairStartIndex     = metaLength.Value +
+                                             metaLength.NumberOfBytes +
+                                             eventStartIndex +
+                                             2;
+                        
+                        //Account for this ignored event's time
+                        ignoredTime        = conductorTime;
+                        //Return false since we don't want to add this event to track
+                        return false;
+                }
+            }
+            //If the event is a SYSEX event we don't care
+            else if(bytes[eventStartIndex] == MIDI_TYPE_SYSEX1 ||
+                    bytes[eventStartIndex] == MIDI_TYPE_SYSEX2)
+            {
+                
+                //SYSEX always cancels running status
+                isRunningStatus     = false;
+                //Read the length of the SYSEX data
+                Varival sysexLength = new Varival(bytes, eventStartIndex + 2);
+                //The index of ther next event pair is the sum of (in order of adding):
+                //Length of the event data
+                //Length of the Length (how many bytes were used to store the length)
+                //The current eventStartIndex
+                //1 (for the byte that marks the event as SYSEX)
+                pairStartIndex      = sysexLength.Value +
+                                      sysexLength.NumberOfBytes +
+                                      eventStartIndex +
+                                      1;
 
-                    //If we got here, that means we have a regular midi event
-                    else 
-                    {
+                //Account for the time of this ignored event
+                ignoredTime         = conductorTime;
+                //Return false since we don't want to add this event to track
+                return false;
+            }
+            //Here means we are at a Channel event
+            //The good stuff starts here
+            else 
+            {
+                //First, check if we are in running status
+                if(bytes[eventStartIndex] > 0x7F) {
+                    //If byte is > 0x7F running status has ended
+                    status          = bytes[eventStartIndex];
+                    isRunningStatus = false;
+                }
+                //If this was skipped, it is running status
+                //and the old status will do
 
-                        //Check if we are in running status
-                        if(bytes[eventStartIndex] > 0x7F) 
+                //We switch over the first 4 bits of the status
+                //The low order 4 bits are channel number info that we dont need
+                switch(status & 0xF0) {
+                    case MIDI_VOICE_NOTE_OFF:
+                        //Set event code appropriately
+                        eventCode       = ParsecMessage.EC_DEVICE_NOTEOFF;
+                        //Advance pairStartIndex
+                        pairStartIndex  = eventStartIndex +
+                                          3 -
+                                          (uint)(isRunningStatus ? 1 : 0);
+
+                        //Always assume running status will start
+                        isRunningStatus = true;
+                        ignoredTime     = 0;
+                        break;
+                    case MIDI_VOICE_NOTE_ON:
+                        //Get velocity to check if this is really a note on event
+                        
+                        byte velocity = bytes[eventStartIndex + 2 - (isRunningStatus ? 1 : 0)];
+
+                        //Note on events with velocity = 0 are actually
+                        //note off events, used to utilize running status
+                        if(velocity == 0)
                         {
-                            //If bytes[k] is greater than 0x7F, then it is a new status, so we record it
-                            status = bytes[eventStartIndex];
-                            isRunningStatus = 0;
+                            //Set event code appropriately
+                            eventCode = ParsecMessage.EC_DEVICE_NOTEOFF;
                         }
-
-                        //If we skipped the prior if statement, then we are in running status, so keep using the previous status
-
-                        //Check which status we are in
-                        if((status & 0xF0) == 0xB0) 
-                        {
-                            //If we are here, then this is either a Channel Mode Message or Controller Change message
-                            //None of these events are relevant
-                            //All events in this grouping have a length of 3
-                            nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
-                            isRunningStatus = 1;
-                            pairStartIndex = nextPairStartIndex;
-                            ignoredDT = eventTime;
-                            continue;
-                        }
-
-                        //If we reach this condition, then the event is a Midi Voice Message
-                        //Finally the good stuff
+                        //Velcity > 0, so note on
                         else 
                         {
+                            //Set event code appropriately
+                            eventCode       = ParsecMessage.EC_DEVICE_NOTEON;
+                            //Index where pitch data is found
+                            uint pitchIndex = eventStartIndex +
+                                              1 - 
+                                              (uint)(isRunningStatus ? 1 : 0);
 
-                            //Check the status byte
-                            if((status & 0xF0) == 0x80) 
-                            {   
-                                //Note off message
-                                eventData = null;
-                                eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEOFF;
-                                //Record the length of the dt/event pair
-                                nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
-                                isRunningStatus = 1;
-                                ignoredDT = 0;
-                            }
-                            else if((status & 0xF0) == 0x90) 
-                            {
-                                //Note on message
-                                byte pitchIndex = bytes[eventStartIndex + 1 - isRunningStatus];
-
-                                int velocity = bytes[eventStartIndex + 2 - isRunningStatus];
-                                if(velocity == 0) 
-                                {
-                                    //Velocity of zero is really a note off event to sustain running status
-                                    eventData = null;
-                                    eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEOFF;
-                                }
-                                else 
-                                {
-                                    eventData = new byte[1];
-                                    eventData[0] = pitchIndex;
-                                    eventCode = ParsecMessage.EVENTCODE_DEVICE_NOTEON;
-                                }
-                                //Record the length of the dt/event pair
-                                nextPairStartIndex = 3 + eventStartIndex - isRunningStatus;
-                                isRunningStatus = 1;
-                                ignoredDT = 0;
-                            }
-                            else if((status & 0xF0) == 0xA0) 
-                            {
-                                //Polyphonic pressure
-                                nextPairStartIndex = 3 + eventStartIndex;
-                                isRunningStatus = 1;
-                                pairStartIndex = nextPairStartIndex;
-                                ignoredDT = eventTime;
-                                continue;
-                            }
-                            else if((status & 0xF0) == 0xC0) 
-                            {
-                                //Program Change
-                                //Record the length of the dt/event pair
-                                nextPairStartIndex = 2 + eventStartIndex;
-                                isRunningStatus = 1;
-                                pairStartIndex = nextPairStartIndex;
-                                ignoredDT = eventTime;
-                                continue;
-                            }
-                            else if((status & 0xF0) == 0xD0) 
-                            {
-                                //Channel Key Pressure
-                                //Record the length of the dt/event pair
-                                nextPairStartIndex = 2 + eventStartIndex;
-                                isRunningStatus = 1;
-                                pairStartIndex = nextPairStartIndex;
-                                ignoredDT = eventTime;
-                                continue;
-                            }
-                            else if((status & 0xF0) == 0xE0) 
-                            {
-                                //Pitch Bend
-                                //TODO This one might actually be useful at some time
-                                //Record the length of the dt/event pair
-                                nextPairStartIndex = 3 + eventStartIndex;
-                                isRunningStatus = 1;
-                                pairStartIndex = nextPairStartIndex;
-                                ignoredDT = eventTime;
-                                continue;
-                            }
+                            //Store pitch data
+                            eventData       = new byte[1];
+                            eventData[0]    = bytes[pitchIndex];
                         }
-                    }
-                    //Finally! Bless your soul if you got here!
 
-                    //Now if we are here that means we got one of the handful of relevant events
-                    //So we can add it to our track
-                    currentTrack.EnqueueEvent(eventDevice, eventCode, eventData, eventTime, eventSilentData);
-                    pairStartIndex = nextPairStartIndex;
+                        //Advance pairStartIndex
+                        pairStartIndex  = eventStartIndex +
+                                          3 -
+                                          (uint)(isRunningStatus ? 1 : 0);
+
+                        //Always assume running status will start
+                        isRunningStatus = true;
+                        ignoredTime     = 0;
+                        break;
+                    //We ignore every event starting here
+                    case MIDI_MODE_FLAG:
+                        //If we are here, then this is either a Channel Mode Message or Controller Change message
+                        //None of these events are relevant
+                        //All events in this grouping have a length of 3
+                        pairStartIndex  = 3 + eventStartIndex - (uint)(isRunningStatus ? 1 : 0);
+                        //Always assume running status will start
+                        isRunningStatus = true;
+                        //Account for this ignored event's time
+                        ignoredTime     = conductorTime;
+                        //Return false as we skip this event
+                        return false;
+                    case MIDI_VOICE_POLYPHONIC_PRESSURE:
+                        //Length of event is 3
+                        pairStartIndex  = 3 + eventStartIndex - (uint)(isRunningStatus ? 1 : 0);
+                        //Always assume running status will start
+                        isRunningStatus = true;
+                        //Account for this ignored event's time
+                        ignoredTime     = conductorTime;
+                        return false;
+                    case MIDI_VOICE_PROGRAM_CHANGE:
+                        //Length of event is 2
+                        pairStartIndex  = 2 + eventStartIndex - (uint)(isRunningStatus ? 1 : 0);
+                        //Always assume running status will start
+                        isRunningStatus = true;
+                        //Account for this ignored event's time
+                        ignoredTime     = conductorTime;
+                        return false;
+                    case MIDI_VOICE_KEY_PRESSURE:
+                        //Length of event is 2
+                        pairStartIndex  = 2 + eventStartIndex - (uint)(isRunningStatus ? 1 : 0);
+                        //Always assume running status will start
+                        isRunningStatus = true;
+                        //Account for this ignored event's time
+                        ignoredTime     = conductorTime;
+                        return false;
+                    case MIDI_VOICE_PITCH_BEND:
+                        //Length of event is 3
+                        pairStartIndex  = 3 + eventStartIndex - (uint)(isRunningStatus ? 1 : 0);
+                        //Always assume running status will start
+                        isRunningStatus = true;
+                        //Account for this ignored event's time
+                        ignoredTime     = conductorTime;
+                        return false;
+                    default:
+                        throw new InvalidOperationException("Unknown midi event encountered");
                 }
-                trackStartIndex = nextPairStartIndex;
+
+                //Instantiate message to contain the info we parsed
+                message = new ParsecMessage(eventDevice, 
+                                            eventCode, 
+                                            eventData, 
+                                            conductorTime, 
+                                            conductorData);
+                return true;
             }
         }
     }

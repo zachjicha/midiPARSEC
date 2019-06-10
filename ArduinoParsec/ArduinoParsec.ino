@@ -1,5 +1,15 @@
 #include "StepperMotor.h"
 
+#define QUERY_BYTE      0x90
+#define RESPONSE_BYTE   0x26
+
+#define MESSAGE_FLAG    0xAE
+#define BROADCAST_FLAG  0xFF
+#define BEGIN_FLAG      0xB0
+#define END_FLAG        0xE0
+#define IDLE_FLAG       0xA1
+#define STANDBY_FLAG    0xA2 
+
 StepperMotors steppers;
 
 enum State {
@@ -16,7 +26,7 @@ long mils = 0;
 
 void parseMessage() {
   //If message flag is found
-  if(Serial.read() == 0xAE) {
+  if(Serial.read() == MESSAGE_FLAG) {
     byte bytebuffer[3]; 
     //Read the important bytes
     Serial.readBytes(bytebuffer, 3);
@@ -25,19 +35,19 @@ void parseMessage() {
       Serial.readBytes(databuffer, bytebuffer[1]);
     }
 
-    if(bytebuffer[0] == 0xFF) {
-      if(bytebuffer[2] == 0xB0) {
+    if(bytebuffer[0] == BROADCAST_FLAG) {
+      if(bytebuffer[2] == BEGIN_FLAG) {
         state = PLAY_MUSIC;
         digitalWrite(LED_BUILTIN, HIGH);
       }
-      else if(bytebuffer[2] == 0xE0) {
+      else if(bytebuffer[2] == END_FLAG) {
         state = SEQUENCE_END;
         digitalWrite(LED_BUILTIN, LOW);
       }
-      else if(bytebuffer[2] == 0xA1) {
+      else if(bytebuffer[2] == IDLE_FLAG) {
         stepperMotorIdle(&steppers);
       }
-      else if(bytebuffer[2] == 0xA2) {
+      else if(bytebuffer[2] == STANDBY_FLAG) {
         stepperMotorStandby(&steppers);
       }
     }
@@ -86,7 +96,7 @@ void loop() {
   switch(state){
     case RECEIVE_QUERY:
       
-      if(Serial.read() == 0x7F) {
+      if(Serial.read() == QUERY_BYTE) {
         state = SEND_RESPONSE;
       }
       
@@ -94,7 +104,7 @@ void loop() {
 
     case SEND_RESPONSE:
     
-      Serial.write(0x7F);
+      Serial.write(RESPONSE_BYTE);
       state = WAITING_FOR_START;
 
       break;

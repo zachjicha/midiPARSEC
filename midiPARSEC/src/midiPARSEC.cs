@@ -9,7 +9,7 @@ using System.Windows.Input;
 namespace midiParsec
 {
     // Serial Encoding Client component, main class of PARSEC
-    class SerialEncodingClient
+    class midiPARSEC
     {
         static void Main(string[] args)
         {
@@ -38,7 +38,7 @@ namespace midiParsec
 
             //Idle all devices
             Console.WriteLine("All devices idling! Press ENTER to begin...");
-            arduino.WriteParsecMessage(ParsecMessage.AllDevicesIdle);
+            arduino.WriteParsecMessage(ParsecMessage.PM_ALL_IDLE);
             
             //Wait for user to press enter
             while(true)
@@ -52,10 +52,10 @@ namespace midiParsec
 
             //Standby all devices
             Console.WriteLine("All devices standing by...");
-            arduino.WriteParsecMessage(ParsecMessage.AllDevicesStandby);
+            arduino.WriteParsecMessage(ParsecMessage.PM_ALL_STANDBY);
 
             //Tell the arduino to begin the sequence
-            arduino.WriteParsecMessage(ParsecMessage.SequenceBeginMessage);
+            arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_BEGIN);
 
             Console.WriteLine("Now playing! Press ENTER again to stop...");
 
@@ -80,10 +80,10 @@ namespace midiParsec
                 sequence.TraverseSequence(currentMicros, arduino);
              
                 //Check if no tracks are left (sequence is done)
-                if(sequence.GetTracksLeft() == 0)
+                if(sequence.GetRemainingTracks() == 0)
                 {
                     //Send the sequence end message and break from the loop
-                    arduino.WriteParsecMessage(ParsecMessage.SequenceEndMessage);
+                    arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_END);
                     break;
                 }
 
@@ -93,7 +93,7 @@ namespace midiParsec
                     //Exit on enter
                     if(Console.ReadKey().Key == ConsoleKey.Enter)
                     {
-                        arduino.WriteParsecMessage(ParsecMessage.SequenceEndMessage);
+                        arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_END);
                         break;
                     }
                 }
