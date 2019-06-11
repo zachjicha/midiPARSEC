@@ -108,35 +108,35 @@ namespace midiParsec
         public void TraverseSequence(long currentTime, Arduino arduino)
         {
 
-            for(int i = 0; i < _sequenceList.Count; ++i)
+            for(int track = 0; track < _sequenceList.Count; ++track)
             {
                 //Skip if this track is done
-                if(_currentEvents[i] == null) continue;
+                if(_currentEvents[track] == null) continue;
                     
                 
-                if((currentTime - _eventStartTimes[i]) >= (_usecPerTick * _currentEvents[i].GetTime()))
+                if((currentTime - _eventStartTimes[track]) >= (_usecPerTick * _currentEvents[track].GetTime()))
                 {
                     //Check if event is a "conductor event" (one the arduino doesn't need to know about, but is still an event)
-                    if((_currentEvents[i].GetEventCode() & 0xF0) == 0xC0)
+                    if((_currentEvents[track].GetEventCode() & 0xF0) == 0xC0)
                     {
                         
-                        if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_EOT) 
+                        if(_currentEvents[track].GetEventCode() == ParsecMessage.EC_CONDUCTOR_EOT) 
                         {
                             --_remainingTracks;
-                            _currentEvents[i] = null;
+                            _currentEvents[track] = null;
                         }
                         else 
                         {
                             //Tempo change event
-                            if(_currentEvents[i].GetEventCode() == ParsecMessage.EC_CONDUCTOR_TEMPO)
+                            if(_currentEvents[track].GetEventCode() == ParsecMessage.EC_CONDUCTOR_TEMPO)
                             {   
                                 //Update tempo
-                                _usecPerTick   = _currentEvents[i].GetConductorData()/_clockDivision;
+                                _usecPerTick = _currentEvents[track].GetConductorData()/_clockDivision;
                             }
                             
                             //Update the current event
-                            _currentEvents[i]   = GetNextEvent(i);
-                            _eventStartTimes[i] = currentTime;
+                            _currentEvents[track]   = GetNextEvent(track);
+                            _eventStartTimes[track] = currentTime;
                         }
 
                         
@@ -145,11 +145,11 @@ namespace midiParsec
                     else 
                     {      
                         //Write the event to serial
-                        arduino.WriteParsecMessage(_currentEvents[i]);
+                        arduino.WriteParsecMessage(_currentEvents[track]);
 
                         //Update the current event
-                        _currentEvents[i]   = GetNextEvent(i);
-                        _eventStartTimes[i] = currentTime;
+                        _currentEvents[track]   = GetNextEvent(track);
+                        _eventStartTimes[track] = currentTime;
                         
                     }
                 }

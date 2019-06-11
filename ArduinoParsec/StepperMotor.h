@@ -5,8 +5,8 @@
 #include <Arduino.h>
 
 #define MAX_STEPPER_MOTORS 4
-#define MAX_FULLSTEP_NOTE 4200
-#define MIN_FULLSTEP_NOTE 2800
+#define MIN_FULLSTEP_INDEX 58
+#define MAX_FULLSTEP_INDEX 66
 
 #ifdef __cplusplus
 extern "C" {

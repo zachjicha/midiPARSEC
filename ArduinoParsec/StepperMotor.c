@@ -60,7 +60,7 @@ void stepperMotorPlay(StepperMotors* stepper) {
 }
 
 void stepperMotorAutoMode(StepperMotors* stepper, int index) {
-    if(stepper->notePeriod[index] < MIN_FULLSTEP_NOTE || stepper->notePeriod[index] > MAX_FULLSTEP_NOTE){
+    if(index < MIN_FULLSTEP_INDEX || index > MAX_FULLSTEP_INDEX){
         digitalWrite(stepper->modePins[index], HIGH);
     }
     else {
