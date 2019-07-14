@@ -35,6 +35,12 @@ void parseMessage() {
       Serial.readBytes(databuffer, bytebuffer[1]);
     }
 
+    //Ignore messages for motors that don't exist
+    //but don't throw out broadast messages
+    if(bytebuffer[0] > MAX_STEPPER_MOTORS && bytebuffer[0] != BROADCAST_FLAG) {
+      return;
+    }
+
     if(bytebuffer[0] == BROADCAST_FLAG) {
       if(bytebuffer[2] == BEGIN_FLAG) {
         state = PLAY_MUSIC;

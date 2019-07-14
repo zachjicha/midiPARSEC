@@ -4,9 +4,9 @@
 #include "ParsecInstrument.h"
 #include <Arduino.h>
 
-#define MAX_STEPPER_MOTORS 4
-#define MIN_FULLSTEP_INDEX 58
-#define MAX_FULLSTEP_INDEX 66
+#define MAX_STEPPER_MOTORS 5
+#define MIN_FULLSTEP_INDEX 54
+#define MAX_FULLSTEP_INDEX 72
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,7 +23,7 @@ typedef struct {
 
 void stepperMotorSetup(StepperMotors* stepper);
 void stepperMotorPlay(StepperMotors* stepper);
-void stepperMotorAutoMode(StepperMotors* stepper, int index);
+void stepperMotorAutoMode(StepperMotors* stepper, int noteIndex, int motor);
 void stepperMotorPulse(StepperMotors* stepper, int index);
 void stepperMotorIdle(StepperMotors* stepper);
 void stepperMotorStandby(StepperMotors* stepper);

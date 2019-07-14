@@ -113,7 +113,16 @@ namespace midiParsec
         //Debug print method
         public void Print()
         {
-            Console.WriteLine("{0:X2} {1:X2} {2:X2} {3:X2}  Time:{4} Data:{5}", _message[0], _message[1], _message[2], _message[3], _conductorTime, _conductorData);
+            Console.Write("{0:X2} {1:X2} {2:X2} {3:X2} ", _message[0], _message[1], _message[2], _message[3], _conductorTime, _conductorData);
+            //Print payload if it exists
+            if(_message[2] > 0) 
+            {
+                for(int i = 4; i < _message[2] + 4; ++i)
+                {
+                    Console.Write("Data<{0}>: {1:X2} ", i-4, _message[i]);
+                }
+            }
+            Console.WriteLine("   Time:{0} Data:{1}", _conductorTime, _conductorData);
         }
     }
 }

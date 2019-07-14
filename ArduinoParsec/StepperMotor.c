@@ -8,14 +8,17 @@ void stepperMotorSetup(StepperMotors* stepper) {
     stepper->enPins[1] = 37;
     stepper->enPins[2] = 43;
     stepper->enPins[3] = 49;
+    stepper->enPins[4] = 25;
     stepper->stepPins[0] = 35;
     stepper->stepPins[1] = 41;
     stepper->stepPins[2] = 47;
     stepper->stepPins[3] = 53;
+    stepper->stepPins[4] = 29;
     stepper->modePins[0] = 33;
     stepper->modePins[1] = 39;
     stepper->modePins[2] = 45;
     stepper->modePins[3] = 51;
+    stepper->modePins[4] = 27;
 
     for(int i = 0; i < MAX_STEPPER_MOTORS; i++) {
         pinMode(stepper->enPins[i], OUTPUT);
@@ -57,14 +60,22 @@ void stepperMotorPlay(StepperMotors* stepper) {
             stepper->cycle[3] = 0;
         }
     }
+
+    if(stepper->notePeriod[4] > 0) {
+        stepper->cycle[4] += TIMER_INTERRUPT_INTERVAL;
+        if(stepper->cycle[4] >= stepper->notePeriod[4]) {
+            stepperMotorPulse(stepper, 4);
+            stepper->cycle[4] = 0;
+        }
+    }
 }
 
-void stepperMotorAutoMode(StepperMotors* stepper, int index) {
-    if(index < MIN_FULLSTEP_INDEX || index > MAX_FULLSTEP_INDEX){
-        digitalWrite(stepper->modePins[index], HIGH);
+void stepperMotorAutoMode(StepperMotors* stepper, int noteIndex, int motor) {
+    if(noteIndex < MIN_FULLSTEP_INDEX || noteIndex > MAX_FULLSTEP_INDEX){
+        digitalWrite(stepper->modePins[motor], HIGH);
     }
     else {
-        digitalWrite(stepper->modePins[index], LOW);
+        digitalWrite(stepper->modePins[motor], LOW);
     }
 }
 
@@ -92,7 +103,7 @@ void stepperMotorHandleMessage(StepperMotors* stepper, byte deviceAddress, byte 
 
         case 0xA2:
             stepper->notePeriod[deviceAddress] = pitchVals[data[0]];
-            stepperMotorAutoMode(stepper, deviceAddress);
+            stepperMotorAutoMode(stepper, data[0], deviceAddress);
             break;
     }
 }
