@@ -111,6 +111,7 @@ void loop() {
     case SEND_RESPONSE:
     
       Serial.write(RESPONSE_BYTE);
+      Serial.write(MAX_STEPPER_MOTORS);
       state = WAITING_FOR_START;
 
       break;
