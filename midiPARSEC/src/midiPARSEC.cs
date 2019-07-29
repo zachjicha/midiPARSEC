@@ -24,9 +24,6 @@ namespace midiParsec
             Sequence sequence = new Sequence(args[1]);
             Console.WriteLine("{0} successfully parsed!", args[1]);
 
-            // Debug print the sequence
-            //sequence.Print(0);
-
             //Make arduino object
             Arduino arduino = new Arduino(args[0]);
 
@@ -36,7 +33,7 @@ namespace midiParsec
 
             //Idle all devices
             Console.WriteLine("All devices idling! Press ENTER to begin...");
-            arduino.WriteParsecMessage(ParsecMessage.PM_ALL_IDLE);
+            arduino.WriteParsecMessage(ParsecMessage.PM_ALL_IDLE, sequence.GetNumberOfTracks());
             
             //Wait for user to press enter
             while(true)
@@ -50,10 +47,10 @@ namespace midiParsec
 
             //Standby all devices
             Console.WriteLine("All devices standing by...");
-            arduino.WriteParsecMessage(ParsecMessage.PM_ALL_STANDBY);
+            arduino.WriteParsecMessage(ParsecMessage.PM_ALL_STANDBY, sequence.GetNumberOfTracks());
 
             //Tell the arduino to begin the sequence
-            arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_BEGIN);
+            arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_BEGIN, sequence.GetNumberOfTracks());
 
             Console.WriteLine("Now playing! Press ENTER again to stop...");
 
@@ -81,7 +78,7 @@ namespace midiParsec
                 if(sequence.GetRemainingTracks() == 0)
                 {
                     //Send the sequence end message and break from the loop
-                    arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_END);
+                    arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_END, sequence.GetNumberOfTracks());
                     break;
                 }
 
@@ -91,7 +88,7 @@ namespace midiParsec
                     //Exit on enter
                     if(Console.ReadKey().Key == ConsoleKey.Enter)
                     {
-                        arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_END);
+                        arduino.WriteParsecMessage(ParsecMessage.PM_SEQ_END, sequence.GetNumberOfTracks());
                         break;
                     }
                 }
