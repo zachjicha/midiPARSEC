@@ -8,4 +8,4 @@ For instructions on setting up and running the code, head over to the [installat
 
 Visit the wiki for more information.
 
-Here is an example of the code running: [https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL](https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL)
+Here are examples of the code running: [https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL](https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL)
