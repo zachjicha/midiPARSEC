@@ -33,11 +33,13 @@ namespace midiParsec
 
         private List<Track>     _sequenceList;
         private int             _remainingTracks;
+        private uint            _numberOfTracks;
         private double          _clockDivision;
         private double          _usecPerTick;
         private ParsecMessage[] _currentEvents;
         private long[]          _eventStartTimes;
         private string          _fileName;
+        
 
         // Class needed for parsing midi variable length values 
         private class Varival
@@ -145,7 +147,7 @@ namespace midiParsec
                     else 
                     {      
                         //Write the event to serial
-                        arduino.WriteParsecMessage(_currentEvents[track]);
+                        arduino.WriteParsecMessage(_currentEvents[track], _numberOfTracks);
 
                         //Update the current event
                         _currentEvents[track]   = GetNextEvent(track);
@@ -160,6 +162,11 @@ namespace midiParsec
         public int GetRemainingTracks()
         {
             return _remainingTracks;
+        }
+
+        public uint GetNumberOfTracks()
+        {
+            return _numberOfTracks;
         }
 
         public ParsecMessage GetNextEvent(int track)
@@ -202,7 +209,7 @@ namespace midiParsec
 
             byte[] bytes       = File.ReadAllBytes(_fileName);
             //Get the number of tracks
-            uint tracksToParse = ByteArrayToUnsignedInt(bytes, 10, 11);
+            _numberOfTracks    = ByteArrayToUnsignedInt(bytes, 10, 11);
             //Get the pulses per quarter note
             _clockDivision     = ByteArrayToUnsignedInt(bytes, 12, 13);
 
@@ -217,7 +224,7 @@ namespace midiParsec
             uint trackStartIndex = 14;
 
 
-            while(_sequenceList.Count <= tracksToParse) 
+            while(_sequenceList.Count <= _numberOfTracks) 
             {
                 ParseTrack(bytes, ref trackStartIndex);
             }
