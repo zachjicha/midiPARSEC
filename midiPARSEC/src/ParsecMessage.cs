@@ -80,6 +80,57 @@ namespace midiParsec
             return _message;
         }
 
+        public byte[] FormatAndGetMessage(int numberOfSteppers, uint numberOfTracks) 
+        {
+            //No need to modify the message if # of motors >= # of tracks
+            //or if it is a broadcast message
+            if(_message[1] == 0xFF || numberOfSteppers >= numberOfTracks) 
+            {
+                return  _message;
+            }
+
+            //If the number of motors is odd
+            if(numberOfSteppers % 2 == 1)
+            {
+                byte offset = (byte)((numberOfSteppers - numberOfTracks)/2);
+                //If the number of tracks is odd
+                if(numberOfTracks % 2 == 1)
+                {
+                    //Offset the motors so the middle ones play
+                    _message[1] += offset;
+                }
+                //If there are an even number of tracks
+                else {
+                    //Offset the first half of the motors
+                    if(_message[1] <= numberOfTracks/2) 
+                    {
+                        _message[1] += offset;
+                    }
+                    //Skip the middle motor, it will not play
+                    else 
+                    {
+                        _message[1] += offset;
+                        _message[1] += 1;
+                    }
+                }
+            }
+            //If number of motors is even
+            else 
+            {
+                byte offset = (byte)((numberOfSteppers - numberOfTracks)/2);
+                //If the number of tracks is odd
+                if(numberOfTracks % 2 == 0)
+                {
+                    //Offset the motors so the middle ones play
+                    _message[1] += offset;
+                }
+                //Nothing to be done if odd number of tracks, they can't be arranged 
+                //nicely on an even number of motors
+            }
+
+            return _message;
+        }
+
         public uint GetTime()
         {
             return _conductorTime;
