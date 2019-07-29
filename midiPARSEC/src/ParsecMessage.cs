@@ -82,9 +82,8 @@ namespace midiParsec
 
         public byte[] FormatAndGetMessage(int numberOfSteppers, uint numberOfTracks) 
         {
-            //No need to modify the message if # of motors >= # of tracks
-            //or if it is a broadcast message
-            if(_message[1] == 0xFF || numberOfSteppers >= numberOfTracks) 
+            //No need to modify the message if it is a broadcast message
+            if(_message[1] == 0xFF) 
             {
                 return  _message;
             }
