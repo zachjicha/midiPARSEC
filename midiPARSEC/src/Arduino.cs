@@ -14,6 +14,7 @@ namespace midiParsec
         private const byte QUERY_BYTE    = 0x90;
         private const byte RESPONSE_BYTE = 0x26;
 
+        private int        _maxSteppers;
         private SerialPort _commsPort;
 
         public Arduino(string port)
@@ -48,6 +49,9 @@ namespace midiParsec
                     waitingForResponse = false;
                 }
             }
+
+            //Read the second response byte which tells us how many steppers are connected to the arduino
+            _maxSteppers = _commsPort.ReadByte();
         }
 
         //Method to open serial port
@@ -73,10 +77,10 @@ namespace midiParsec
         } 
 
         //Method to write the bytes of a PARSEC message to the serial port
-        public void WriteParsecMessage(ParsecMessage message)
+        public void WriteParsecMessage(ParsecMessage message, uint numberOfTracks)
         {
             //Write the message bytes
-            _commsPort.Write(message.GetMessage(), 0, message.GetLength());
+            _commsPort.Write(message.FormatAndGetMessage(_maxSteppers, numberOfTracks), 0, message.GetLength());
         }
     }
 }
