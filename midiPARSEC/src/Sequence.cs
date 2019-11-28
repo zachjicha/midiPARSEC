@@ -30,7 +30,6 @@ namespace midiParsec
         private const byte MIDI_VOICE_PITCH_BEND          = 0xE0;
 
 
-
         private List<Track>     _sequenceList;
         private int             _remainingTracks;
         private uint            _numberOfTracks;
@@ -40,6 +39,13 @@ namespace midiParsec
         private long[]          _eventStartTimes;
         private string          _fileName;
         
+        public int RemainingTracks => _remainingTracks;
+        public uint NumberOfTracks => _numberOfTracks;
+
+        public ParsecMessage GetNextEvent(int track)
+        {
+            return _sequenceList[track].DequeueEvent();
+        }
 
         // Class needed for parsing midi variable length values 
         private class Varival
@@ -116,13 +122,13 @@ namespace midiParsec
                 if(_currentEvents[track] == null) continue;
                     
                 
-                if((currentTime - _eventStartTimes[track]) >= (_usecPerTick * _currentEvents[track].GetTime()))
+                if((currentTime - _eventStartTimes[track]) >= (_usecPerTick * _currentEvents[track].ConductorTime))
                 {
                     //Check if event is a "conductor event" (one the arduino doesn't need to know about, but is still an event)
-                    if((_currentEvents[track].GetEventCode() & 0xF0) == 0xC0)
+                    if((_currentEvents[track].EventCode & 0xF0) == 0xC0)
                     {
                         
-                        if(_currentEvents[track].GetEventCode() == ParsecMessage.EC_CONDUCTOR_EOT) 
+                        if(_currentEvents[track].EventCode == ParsecMessage.EC_CONDUCTOR_EOT) 
                         {
                             --_remainingTracks;
                             _currentEvents[track] = null;
@@ -130,10 +136,10 @@ namespace midiParsec
                         else 
                         {
                             //Tempo change event
-                            if(_currentEvents[track].GetEventCode() == ParsecMessage.EC_CONDUCTOR_TEMPO)
+                            if(_currentEvents[track].EventCode == ParsecMessage.EC_CONDUCTOR_TEMPO)
                             {   
                                 //Update tempo
-                                _usecPerTick = _currentEvents[track].GetConductorData()/_clockDivision;
+                                _usecPerTick = _currentEvents[track].ConductorData/_clockDivision;
                             }
                             
                             //Update the current event
@@ -156,22 +162,6 @@ namespace midiParsec
                     }
                 }
             }
-        }
-
-        //Getters
-        public int GetRemainingTracks()
-        {
-            return _remainingTracks;
-        }
-
-        public uint GetNumberOfTracks()
-        {
-            return _numberOfTracks;
-        }
-
-        public ParsecMessage GetNextEvent(int track)
-        {
-            return _sequenceList[track].DequeueEvent();
         }
 
         public void Print(int track) 

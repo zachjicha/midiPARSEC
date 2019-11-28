@@ -30,7 +30,7 @@ namespace midiParsec
             //Make a new message and enqueue it
             _trackQueue.Enqueue(message);
             //Add time to to the cumulative sum
-            CumulativeTime += message.GetTime();
+            CumulativeTime += message.ConductorTime;
         }
 
         // Dequeue an event and return its contents as a tuple

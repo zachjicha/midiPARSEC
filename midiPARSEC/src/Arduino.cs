@@ -80,7 +80,7 @@ namespace midiParsec
         public void WriteParsecMessage(ParsecMessage message, uint numberOfTracks)
         {
             //Write the message bytes
-            _commsPort.Write(message.FormatAndGetMessage(_maxSteppers, numberOfTracks), 0, message.GetLength());
+            _commsPort.Write(message.FormatAndGetMessage(_maxSteppers, numberOfTracks), 0, message.Length);
         }
     }
 }

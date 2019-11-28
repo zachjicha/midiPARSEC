@@ -33,6 +33,15 @@ namespace midiParsec
         private uint   _conductorTime;
         private uint   _conductorData;
 
+        //Accessors
+        public byte[] Message => _message;
+        public uint ConductorTime => _conductorTime;
+        public byte DeviceAddress => _message[1];
+        public byte Length => (byte)(4 + _message[2]);
+        public byte EventCode => _message[3];
+        public byte Data => _message[4];
+        public uint ConductorData => _conductorData;
+
         //Default constructor
         public ParsecMessage() 
         {
@@ -72,12 +81,6 @@ namespace midiParsec
                 }
             }
             
-        }
-
-        //Getters
-        public byte[] GetMessage()
-        {
-            return _message;
         }
 
         public byte[] FormatAndGetMessage(int numberOfSteppers, uint numberOfTracks) 
@@ -129,37 +132,7 @@ namespace midiParsec
 
             return _message;
         }
-
-        public uint GetTime()
-        {
-            return _conductorTime;
-        }  
-
-        public byte GetDeviceAddress()
-        {
-            return _message[1];
-        }
-
-        public byte GetLength()
-        {
-            return (byte)(4 + _message[2]);
-        }
-
-        public byte GetEventCode()
-        {
-            return _message[3];
-        }
-
-        public byte GetData()
-        {
-            return _message[4];
-        }
-
-        public uint GetConductorData()
-        {
-            return _conductorData;
-        }
-
+        
         //Debug print method
         public void Print()
         {
