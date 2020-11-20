@@ -1,6 +1,14 @@
 package main
 
-type Event struct {
+/*
+ * MessageBytes  - Stores bytes to be sent over serial to arduino
+ * ConductorTime - Stores time from beginning of preceding message
+ * ConductorData - Stores any info the conductor will need, such as tempo change
+ */
+type ParsecMessage struct {
+	MessageBytes  []byte
+	ConductorTime uint
+	ConductorData uint
 }
 
 /*
@@ -8,7 +16,7 @@ type Event struct {
  * cumulativeTime - Stores the total delta time of all events in the track
  */
 type Track struct {
-	events         []Event
+	messages       []ParsecMessage
 	cumulativeTime uint64
 }
 
