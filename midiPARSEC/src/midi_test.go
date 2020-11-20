@@ -3,6 +3,7 @@ package main
 import (
 	"math/rand"
 	"testing"
+	"time"
 )
 
 func printFailure(t *testing.T, unit string, expected interface{}, got interface{}) {
@@ -12,9 +13,9 @@ func printFailure(t *testing.T, unit string, expected interface{}, got interface
 func TestReadVarival(t *testing.T) {
 
 	unit := "readVarival()"
-
+	rand.Seed(time.Now().UnixNano())
 	// TEST ZERO
-	t.Run("Test zero Varival ", func(t *testing.T) {
+	t.Run("Test zero Varival", func(t *testing.T) {
 		zeroResult := readVarival([]byte{0x00}, 0)
 		zeroTrue := Varival{
 			numBytes: 1,
@@ -29,7 +30,7 @@ func TestReadVarival(t *testing.T) {
 	// TEST 3 different lengths
 
 	// Test single byte value
-	t.Run("Test a single byte Varival ", func(t *testing.T) {
+	t.Run("Test a single byte Varival", func(t *testing.T) {
 
 		randNum := rand.Intn(15) + 1
 		randResult := readVarival([]byte{uint8(randNum)}, 0)
@@ -44,7 +45,7 @@ func TestReadVarival(t *testing.T) {
 	})
 
 	//3 byte test
-	t.Run("Test a thrre byte Varival ", func(t *testing.T) {
+	t.Run("Test a three byte Varival", func(t *testing.T) {
 		longResult := readVarival([]byte{0x00, 0x01, 0xA5, 0x87, 0x7F, 0x00, 0x02}, 2)
 		longTrue := Varival{
 			numBytes: 3,
@@ -57,7 +58,7 @@ func TestReadVarival(t *testing.T) {
 	})
 
 	// Max value test
-	t.Run("Test max Varival ", func(t *testing.T) {
+	t.Run("Test max Varival", func(t *testing.T) {
 		maxResult := readVarival([]byte{0xFF, 0xFF, 0xFF, 0x7F}, 0)
 		maxTrue := Varival{
 			numBytes: 4,
