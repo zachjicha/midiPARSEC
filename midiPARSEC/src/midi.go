@@ -35,18 +35,7 @@ type Sequence struct {
 	eventStartTimes []float64
 }
 
-/*
- * numBytes - Number of bytes used to store the variable length value
- * value    - Numerical value of the variable length value
- */
-type Varival struct {
-	numBytes uint8
-	value    uint32
-}
-
-func readVarival(bytes []byte, start uint32) *Varival {
-	var numBytes uint8 = 0
-	var value uint32 = 0
+func readVarival(bytes []byte, start uint) (numBytes uint8, value uint32) {
 
 	for ; bytes[start]&0x80 == 0x80; start, numBytes = start+1, numBytes+1 {
 		value = (value << 7) + uint32(bytes[start]&0x7F)
@@ -55,9 +44,5 @@ func readVarival(bytes []byte, start uint32) *Varival {
 	numBytes++
 	value = (value << 7) + uint32(bytes[start]&0x7F)
 
-	return &Varival{
-		numBytes: numBytes,
-		value:    value,
-	}
-
+	return numBytes, value
 }
