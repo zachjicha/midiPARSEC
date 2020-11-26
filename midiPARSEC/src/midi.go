@@ -35,14 +35,33 @@ type Sequence struct {
 	eventStartTimes []float64
 }
 
-func readVarival(bytes []byte, start uint) (numBytes uint8, value uint32) {
+func initMessage(device byte, code byte, data []byte, conductorTime uint, conductorData uint) (message *ParsecMessage) {
+	message.ConductorData = conductorData
+	message.ConductorTime = conductorTime
 
-	for ; bytes[start]&0x80 == 0x80; start, numBytes = start+1, numBytes+1 {
-		value = (value << 7) + uint32(bytes[start]&0x7F)
+	var messageLength byte
+	if data == nil {
+		messageLength = 0
+	} else {
+		messageLength = byte(len(data))
 	}
 
-	numBytes++
-	value = (value << 7) + uint32(bytes[start]&0x7F)
+	// Initialize bytes
+	message.MessageBytes = make([]byte, 0)
+	message.MessageBytes = append(message.MessageBytes, PARSEC_FLAG)
+	message.MessageBytes = append(message.MessageBytes, device)
+	message.MessageBytes = append(message.MessageBytes, messageLength)
+	message.MessageBytes = append(message.MessageBytes, code)
 
-	return numBytes, value
+	if messageLength > 0 {
+		for _, val := range data {
+			message.MessageBytes = append(message.MessageBytes, val)
+		}
+	}
+
+	return
+}
+
+func appendMessage(track *Track, message *ParsecMessage) {
+	track.messages = append(track.messages, *message)
 }

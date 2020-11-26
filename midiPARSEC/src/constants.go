@@ -21,4 +21,8 @@ const MIDI_KEY_PRES byte = 0xD0
 const MIDI_PITCH_BEND byte = 0xE0
 
 // Values from the PARSEC message protocol)
+const PARSEC_FLAG byte = 0xAE
 const PARSEC_EOT byte = 0x00
+
+// Warmup constants
+const WARMUP_LENGTH uint = 5750
