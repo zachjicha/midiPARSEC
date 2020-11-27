@@ -24,9 +24,9 @@ func parseEvent(bytes []byte, start uint, bundle *ParseBundle) (message *ParsecM
 	case TYPE_META:
 		message = parseMetaEvent(bytes, eventStartIndex, conductorTime, bundle)
 	case TYPE_SYSEX_ONE, TYPE_SYSEX_TWO:
-		message = parseSysexEvent()
+		//message = parseSysexEvent()
 	default:
-		message = parseMidiEvent()
+		//message = parseMidiEvent()
 	}
 
 	return
@@ -39,7 +39,6 @@ func parseEvent(bytes []byte, start uint, bundle *ParseBundle) (message *ParsecM
 func parseMetaEvent(bytes []byte, start uint, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
 
 	// Event to be returned
-	var eventDevice byte
 	var eventCode byte
 	var conductorData uint
 

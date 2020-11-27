@@ -8,44 +8,75 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func printFailure(t *testing.T, unit string, expected interface{}, got interface{}) {
-	t.Errorf("%v failed: Expected %v but got %v", unit, expected, got)
+func TestInitMessage(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+
+	t.Run("Test without data segment", func(t *testing.T) {
+
+		device := byte(rand.Intn(15))
+		code := byte(rand.Intn(15))
+		time := uint(rand.Intn(4096))
+		data := uint(rand.Intn(4096))
+
+		result := initMessage(device, code, nil, time, data)
+
+		assert.Equal(t, time, result.ConductorTime)
+		assert.Equal(t, data, result.ConductorData)
+
+		assert.Equal(t, 4, len(result.MessageBytes))
+		assert.Equal(t, PARSEC_FLAG, result.MessageBytes[0])
+		assert.Equal(t, device, result.MessageBytes[1])
+		assert.Equal(t, code, result.MessageBytes[2])
+		assert.Equal(t, byte(0), result.MessageBytes[3])
+	})
+
+	t.Run("Test with data segment", func(t *testing.T) {
+
+		device := byte(rand.Intn(15))
+		code := byte(rand.Intn(15))
+		ctime := uint(rand.Intn(4096))
+		cdata := uint(rand.Intn(4096))
+
+		dataLength := rand.Intn(4) + 1
+		var dataBytes []byte
+
+		for i := 0; i < dataLength; i++ {
+			dataBytes = append(dataBytes, byte(rand.Intn(15)))
+		}
+
+		result := initMessage(device, code, dataBytes, ctime, cdata)
+
+		assert.Equal(t, ctime, result.ConductorTime)
+		assert.Equal(t, cdata, result.ConductorData)
+
+		assert.Equal(t, 4+dataLength, len(result.MessageBytes))
+		assert.Equal(t, PARSEC_FLAG, result.MessageBytes[0])
+		assert.Equal(t, device, result.MessageBytes[1])
+		assert.Equal(t, code, result.MessageBytes[2])
+		assert.Equal(t, byte(dataLength), result.MessageBytes[3])
+
+		for i := 0; i < dataLength; i++ {
+			assert.Equal(t, dataBytes[i], result.MessageBytes[i+4])
+		}
+	})
 }
 
-func TestReadVarival(t *testing.T) {
+func TestAppendMessage(t *testing.T) {
+	// Start with empty track
 
-	rand.Seed(time.Now().UnixNano())
-	// TEST ZERO
-	t.Run("Test zero Varival", func(t *testing.T) {
-		zeroBytes, zeroValue := readVarival([]byte{0x00}, 0)
+	var track Track
+	// dummy messages
+	message1 := initMessage(0, 0, nil, 0, 0)
+	message2 := initMessage(5, 5, nil, 0, 0)
 
-		assert.Equal(t, uint8(1), zeroBytes)
-		assert.Equal(t, uint32(0), zeroValue)
-	})
-	// TEST 3 different lengths
+	appendMessage(&track, message1)
 
-	// Test single byte value
-	t.Run("Test a single byte Varival", func(t *testing.T) {
-		randNum := rand.Intn(15) + 1
-		randBytes, randValue := readVarival([]byte{uint8(randNum)}, 0)
+	assert.NotNil(t, track.Messages)
+	assert.Equal(t, 1, len(track.Messages))
+	assert.Equal(t, *message1, track.Messages[0])
 
-		assert.Equal(t, uint8(1), randBytes)
-		assert.Equal(t, uint32(randNum), randValue)
-	})
+	appendMessage(&track, message2)
 
-	//3 byte test
-	t.Run("Test a three byte Varival", func(t *testing.T) {
-		longBytes, longValue := readVarival([]byte{0x00, 0x01, 0xA5, 0x87, 0x7F, 0x00, 0x02}, 2)
-
-		assert.Equal(t, uint8(3), longBytes)
-		assert.Equal(t, uint32(0x943FF), longValue)
-	})
-
-	// Max value test
-	t.Run("Test max Varival", func(t *testing.T) {
-		maxBytes, maxValue := readVarival([]byte{0xFF, 0xFF, 0xFF, 0x7F}, 0)
-
-		assert.Equal(t, uint8(4), maxBytes)
-		assert.Equal(t, uint32(0xFFFFFFF), maxValue)
-	})
+	assert.Equal(t, 2, len(track.Messages))
+	assert.Equal(t, *message2, track.Messages[1])
 }

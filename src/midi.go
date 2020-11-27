@@ -16,8 +16,8 @@ type ParsecMessage struct {
  * cumulativeTime - Stores the total delta time of all events in the track
  */
 type Track struct {
-	messages       []ParsecMessage
-	cumulativeTime uint64
+	Messages       []ParsecMessage
+	CumulativeTime uint64
 }
 
 /*
@@ -28,14 +28,17 @@ type Track struct {
  * eventStartTimes - Tracks the start time of the events currently being executed
  */
 type Sequence struct {
-	tracks          []Track
-	remainingTracks uint8
-	clockDivision   float64
-	usecPerTick     float64
-	eventStartTimes []float64
+	Tracks          []Track
+	RemainingTracks uint8
+	ClockDivision   float64
+	UsecPerTick     float64
+	EventStartTimes []float64
 }
 
-func initMessage(device byte, code byte, data []byte, conductorTime uint, conductorData uint) (message *ParsecMessage) {
+func initMessage(device byte, code byte, data []byte, conductorTime uint, conductorData uint) *ParsecMessage {
+
+	var message ParsecMessage
+
 	message.ConductorData = conductorData
 	message.ConductorTime = conductorTime
 
@@ -50,8 +53,8 @@ func initMessage(device byte, code byte, data []byte, conductorTime uint, conduc
 	message.MessageBytes = make([]byte, 0)
 	message.MessageBytes = append(message.MessageBytes, PARSEC_FLAG)
 	message.MessageBytes = append(message.MessageBytes, device)
-	message.MessageBytes = append(message.MessageBytes, messageLength)
 	message.MessageBytes = append(message.MessageBytes, code)
+	message.MessageBytes = append(message.MessageBytes, messageLength)
 
 	if messageLength > 0 {
 		for _, val := range data {
@@ -59,9 +62,9 @@ func initMessage(device byte, code byte, data []byte, conductorTime uint, conduc
 		}
 	}
 
-	return
+	return &message
 }
 
 func appendMessage(track *Track, message *ParsecMessage) {
-	track.messages = append(track.messages, *message)
+	track.Messages = append(track.Messages, *message)
 }
