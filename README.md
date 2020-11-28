@@ -1,5 +1,10 @@
 # midiPARSEC
 
+## TODO
+
+* Test meta event parser through parseEvent()
+* Implement parseMidi()
+
 midi PARser and Serial Encoding Client 
 
 Successor to the mechO project. This parses a midi file and plays it on stepper motors connected to an arduino via serial.

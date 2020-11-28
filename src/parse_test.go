@@ -9,6 +9,46 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParseEvent(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+
+	t.Run("Test Sysex event with F0", func(t *testing.T) {
+		bytes := []byte{0x0A, 0xF0, 0x03, 0xC0, 0xFF, 0xEE}
+		bundle := ParseBundle{
+			Status:         0xFF,
+			PairStartIndex: 0,
+			IgnoredTime:    0,
+			CumulativeTime: 0,
+			ConductorTrack: nil,
+		}
+
+		message := parseEvent(bytes, 0, &bundle)
+
+		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
+		assert.Equal(t, uint(6), bundle.PairStartIndex)
+		assert.Nil(t, message)
+	})
+
+	t.Run("Test Sysex event with F7", func(t *testing.T) {
+		bytes := []byte{0x0A, 0xF7, 0x03, 0xC0, 0xFF, 0xEE}
+		bundle := ParseBundle{
+			Status:         0xFF,
+			PairStartIndex: 0,
+			IgnoredTime:    0,
+			CumulativeTime: 0,
+			ConductorTrack: nil,
+		}
+
+		message := parseEvent(bytes, 0, &bundle)
+
+		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
+		assert.Equal(t, uint(6), bundle.PairStartIndex)
+		assert.Nil(t, message)
+	})
+}
+
 func TestParseUint(t *testing.T) {
 
 	rand.Seed(time.Now().UnixNano())
