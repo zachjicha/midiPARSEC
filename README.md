@@ -3,7 +3,6 @@
 ## TODO
 
 * Test meta event parser through parseEvent()
-* Implement parseMidi()
 
 midi PARser and Serial Encoding Client 
 
