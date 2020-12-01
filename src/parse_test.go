@@ -22,7 +22,7 @@ func TestParseEvent(t *testing.T) {
 			ConductorTrack: nil,
 		}
 
-		message := parseEvent(bytes, 0, &bundle)
+		message := parseEvent(bytes, 0, 0, &bundle)
 
 		assert.Equal(t, uint8(0), bundle.Status)
 		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
@@ -40,11 +40,100 @@ func TestParseEvent(t *testing.T) {
 			ConductorTrack: nil,
 		}
 
-		message := parseEvent(bytes, 0, &bundle)
+		message := parseEvent(bytes, 0, 0, &bundle)
 
 		assert.Equal(t, uint8(0), bundle.Status)
 		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
 		assert.Equal(t, uint(6), bundle.PairStartIndex)
+		assert.Nil(t, message)
+	})
+
+	t.Run("Test EOT Meta event", func(t *testing.T) {
+		bytes := []byte{0x0A, 0xFF, 0x2F, 0x00}
+		bundle := ParseBundle{
+			Status:         0xFF,
+			PairStartIndex: 0,
+			IgnoredTime:    0,
+			CumulativeTime: 0,
+			ConductorTrack: nil,
+		}
+
+		message := parseEvent(bytes, 0, 3, &bundle)
+
+		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, uint(0), bundle.IgnoredTime)
+		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
+		assert.NotNil(t, message)
+		assert.Equal(t, uint(0), message.ConductorTime)
+		assert.Equal(t, uint(0), message.ConductorData)
+		assert.Equal(t, uint8(PARSEC_FLAG), message.MessageBytes[0])
+		assert.Equal(t, uint8(3), message.MessageBytes[1])
+		assert.Equal(t, uint8(PARSEC_EOT), message.MessageBytes[2])
+		assert.Equal(t, uint8(0), message.MessageBytes[3])
+
+	})
+
+	t.Run("Test Tempo Meta event", func(t *testing.T) {
+		bytes := []byte{0x0A, 0xFF, 0x51, 0x03, 0xC0, 0xFF, 0xEE}
+		var conductorTrack Track
+		bundle := ParseBundle{
+			Status:         0xFF,
+			PairStartIndex: 0,
+			IgnoredTime:    0,
+			CumulativeTime: (0x10 + WARMUP_LENGTH),
+			ConductorTrack: &conductorTrack,
+		}
+
+		message := parseEvent(bytes, 0, 3, &bundle)
+
+		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
+		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
+		assert.Equal(t, uint(0x10+WARMUP_LENGTH), bundle.CumulativeTime)
+		assert.NotNil(t, bundle.ConductorTrack)
+
+		assert.Nil(t, message)
+		assert.Equal(t, 1, len(*(bundle.ConductorTrack)))
+
+		cMessage := (*(bundle.ConductorTrack))[0]
+
+		assert.Equal(t, uint(0x1A), cMessage.ConductorTime)
+		assert.Equal(t, uint(0xC0FFEE), cMessage.ConductorData)
+		assert.Equal(t, uint8(PARSEC_FLAG), cMessage.MessageBytes[0])
+		assert.Equal(t, uint8(0), cMessage.MessageBytes[1])
+		assert.Equal(t, uint8(PARSEC_TEMPO), cMessage.MessageBytes[2])
+		assert.Equal(t, uint8(0), cMessage.MessageBytes[3])
+
+	})
+
+	t.Run("Test arbitrary meta event", func(t *testing.T) {
+		bytes := []byte{0x0A, 0xFF}
+
+		// Append fake meta type that is not tempo or eot
+		metaType := byte(rand.Intn(int(META_TEMPO-META_EOT))) + META_EOT + 1
+		bytes = append(bytes, metaType)
+
+		// Fake event will be 2 bytes long
+		bytes = append(bytes, byte(0x02))
+		bytes = append(bytes, byte(rand.Intn(255)))
+		bytes = append(bytes, byte(rand.Intn(255)))
+
+		bundle := ParseBundle{
+			Status:         0xFF,
+			PairStartIndex: 0,
+			IgnoredTime:    0,
+			CumulativeTime: 0,
+			ConductorTrack: nil,
+		}
+
+		message := parseEvent(bytes, 0, 3, &bundle)
+
+		assert.Equal(t, byte(0), bundle.Status)
+		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
+		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
+		assert.Equal(t, uint(0), bundle.CumulativeTime)
+		assert.Nil(t, bundle.ConductorTrack)
+
 		assert.Nil(t, message)
 	})
 }

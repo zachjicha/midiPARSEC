@@ -13,7 +13,7 @@ type ParseBundle struct {
 	ConductorTrack *Track
 }
 
-func parseEvent(bytes []byte, start uint, bundle *ParseBundle) *ParsecMessage {
+func parseEvent(bytes []byte, start uint, device byte, bundle *ParseBundle) *ParsecMessage {
 
 	var message *ParsecMessage
 
@@ -24,7 +24,7 @@ func parseEvent(bytes []byte, start uint, bundle *ParseBundle) *ParsecMessage {
 
 	switch bytes[eventStartIndex] {
 	case TYPE_META:
-		message = parseMetaEvent(bytes, eventStartIndex, conductorTime, bundle)
+		message = parseMetaEvent(bytes, eventStartIndex, device, conductorTime, bundle)
 	case TYPE_SYSEX_ONE, TYPE_SYSEX_TWO:
 		message = parseSysexEvent(bytes, eventStartIndex, conductorTime, bundle)
 	default:
@@ -38,7 +38,7 @@ func parseEvent(bytes []byte, start uint, bundle *ParseBundle) *ParsecMessage {
  * Parses an event given it is a meta event. Will return nil if the event is to be ignored
  * or otherwise a message with all fields but device byte set correctly
  */
-func parseMetaEvent(bytes []byte, start uint, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
+func parseMetaEvent(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
 
 	// Event to be returned
 	var eventCode byte
@@ -54,9 +54,9 @@ func parseMetaEvent(bytes []byte, start uint, conductorTime uint, bundle *ParseB
 		bundle.PairStartIndex = 3 + start
 		bundle.IgnoredTime = 0
 
-		return initMessage(0, eventCode, nil, 0, 0)
+		return initMessage(device, eventCode, nil, 0, 0)
 	case META_TEMPO:
-		eventCode = PARSEC_EOT
+		eventCode = PARSEC_TEMPO
 		conductorData = parseUint(bytes, start+3, start+5)
 
 		conductorMessage := initMessage(0, eventCode, nil, bundle.CumulativeTime+conductorTime-WARMUP_LENGTH, conductorData)

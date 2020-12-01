@@ -71,12 +71,12 @@ func TestAppendMessage(t *testing.T) {
 
 	appendMessage(&track, message1)
 
-	assert.NotNil(t, track.Messages)
-	assert.Equal(t, 1, len(track.Messages))
-	assert.Equal(t, *message1, track.Messages[0])
+	assert.NotNil(t, track)
+	assert.Equal(t, 1, len(track))
+	assert.Equal(t, *message1, track[0])
 
 	appendMessage(&track, message2)
 
-	assert.Equal(t, 2, len(track.Messages))
-	assert.Equal(t, *message2, track.Messages[1])
+	assert.Equal(t, 2, len(track))
+	assert.Equal(t, *message2, track[1])
 }

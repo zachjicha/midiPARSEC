@@ -12,16 +12,12 @@ type ParsecMessage struct {
 }
 
 /*
- * events         - Stores events in the track
- * cumulativeTime - Stores the total delta time of all events in the track
+ * A track is simply a list of messages
  */
-type Track struct {
-	Messages       []ParsecMessage
-	CumulativeTime uint64
-}
+type Track []ParsecMessage
 
 /*
- * tracks          - Stores tarcks in the sequence
+ * tracks          - Stores tracks in the sequence, first is always conductor
  * remainingTracks - Number of tracks still playing music
  * clockDivision   - Midi clock division
  * usecPerTick     - Microseconds per Midi Tick (clock division)
@@ -66,5 +62,5 @@ func initMessage(device byte, code byte, data []byte, conductorTime uint, conduc
 }
 
 func appendMessage(track *Track, message *ParsecMessage) {
-	track.Messages = append(track.Messages, *message)
+	*track = append(*track, *message)
 }
