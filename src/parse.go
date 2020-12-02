@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 /*
  * Status          - Contains current status for running status
  * IsRunningStatus - True if running status is in effect
@@ -37,7 +39,7 @@ func parseEvent(bytes []byte, start uint, device byte, bundle *ParseBundle) *Par
 	case TYPE_SYSEX_ONE, TYPE_SYSEX_TWO:
 		message = parseSysexEvent(bytes, eventStartIndex, conductorTime, bundle)
 	default:
-		message = parseMidiEvent()
+		message = parseMidiEvent(bytes, eventStartIndex, device, conductorTime, bundle)
 	}
 
 	return message
@@ -109,16 +111,16 @@ func parseMidiEvent(bytes []byte, start uint, device byte, conductorTime uint, b
 
 	// Check if running status has ended
 	if bytes[start]&0x80 == 0x80 {
-		bundle.Status = bytes[start]
+		bundle.Status = bytes[start] & 0xF0
 		bundle.IsRunningStatus = false
 	} else if !bundle.IsRunningStatus {
 		panic("No status byte given while not in running status")
 	}
 
-	ok, parseFunc = midiParseMap[bundle.Status]
+	parseFunc, ok := midiParseMap[bundle.Status]
 
 	if !ok {
-		panic("Unknown status byte in midi event")
+		panic(fmt.Sprintf("Unknown status byte (%X) in midi event", bundle.Status))
 	}
 
 	message := parseFunc(bytes, start, device, conductorTime, bundle)
@@ -130,7 +132,7 @@ func parseMidiEvent(bytes []byte, start uint, device byte, conductorTime uint, b
 }
 
 func parseMidiNoteOff(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
-	bundle.PairStartIndex = start + 2 + runningStatusLength(bundle.Status)
+	bundle.PairStartIndex = start + 2 + runningStatusLength(bundle.IsRunningStatus)
 	bundle.IgnoredTime = 0
 
 	return initMessage(device, PARSEC_NOTE_OFF, nil, conductorTime, 0)

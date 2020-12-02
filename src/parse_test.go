@@ -25,6 +25,7 @@ func TestParseEvent(t *testing.T) {
 		message := parseEvent(bytes, 0, 0, &bundle)
 
 		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, false, bundle.IsRunningStatus)
 		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
 		assert.Equal(t, uint(6), bundle.PairStartIndex)
 		assert.Nil(t, message)
@@ -43,6 +44,7 @@ func TestParseEvent(t *testing.T) {
 		message := parseEvent(bytes, 0, 0, &bundle)
 
 		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, false, bundle.IsRunningStatus)
 		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
 		assert.Equal(t, uint(6), bundle.PairStartIndex)
 		assert.Nil(t, message)
@@ -61,6 +63,7 @@ func TestParseEvent(t *testing.T) {
 		message := parseEvent(bytes, 0, 3, &bundle)
 
 		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, false, bundle.IsRunningStatus)
 		assert.Equal(t, uint(0), bundle.IgnoredTime)
 		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
 		assert.NotNil(t, message)
@@ -87,6 +90,7 @@ func TestParseEvent(t *testing.T) {
 		message := parseEvent(bytes, 0, 3, &bundle)
 
 		assert.Equal(t, uint8(0), bundle.Status)
+		assert.Equal(t, false, bundle.IsRunningStatus)
 		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
 		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
 		assert.Equal(t, uint(0x10+WARMUP_LENGTH), bundle.CumulativeTime)
@@ -129,12 +133,63 @@ func TestParseEvent(t *testing.T) {
 		message := parseEvent(bytes, 0, 3, &bundle)
 
 		assert.Equal(t, byte(0), bundle.Status)
+		assert.Equal(t, false, bundle.IsRunningStatus)
 		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
 		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
 		assert.Equal(t, uint(0), bundle.CumulativeTime)
 		assert.Nil(t, bundle.ConductorTrack)
 
 		assert.Nil(t, message)
+	})
+
+	t.Run("Test midi note off", func(t *testing.T) {
+		bytes := []byte{0x0A, 0x81, 0x3C, 0x00}
+
+		bundle := ParseBundle{
+			Status:         0xFF,
+			PairStartIndex: 0,
+			IgnoredTime:    0,
+			CumulativeTime: 0,
+			ConductorTrack: nil,
+		}
+
+		message1 := parseEvent(bytes, 0, 3, &bundle)
+
+		assert.Equal(t, MIDI_NOTE_OFF, bundle.Status)
+		assert.Equal(t, true, bundle.IsRunningStatus)
+		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
+		assert.Equal(t, uint(0), bundle.IgnoredTime)
+		assert.Equal(t, uint(0), bundle.CumulativeTime)
+		assert.Nil(t, bundle.ConductorTrack)
+
+		assert.NotNil(t, message1)
+		assert.Equal(t, PARSEC_FLAG, message1.MessageBytes[0])
+		assert.Equal(t, byte(3), message1.MessageBytes[1])
+		assert.Equal(t, PARSEC_NOTE_OFF, message1.MessageBytes[2])
+		assert.Equal(t, byte(0), message1.MessageBytes[3])
+		assert.Equal(t, uint(0x0A), message1.ConductorTime)
+		assert.Equal(t, uint(0x00), message1.ConductorData)
+
+		bytes = []byte{0x0A, 0x3C, 0x00}
+
+		// test running status
+		message2 := parseEvent(bytes, 0, 3, &bundle)
+
+		assert.Equal(t, MIDI_NOTE_OFF, bundle.Status)
+		assert.Equal(t, true, bundle.IsRunningStatus)
+		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
+		assert.Equal(t, uint(0), bundle.IgnoredTime)
+		assert.Equal(t, uint(0), bundle.CumulativeTime)
+		assert.Nil(t, bundle.ConductorTrack)
+
+		assert.NotNil(t, message2)
+		assert.Equal(t, PARSEC_FLAG, message2.MessageBytes[0])
+		assert.Equal(t, byte(3), message2.MessageBytes[1])
+		assert.Equal(t, PARSEC_NOTE_OFF, message2.MessageBytes[2])
+		assert.Equal(t, byte(0), message2.MessageBytes[3])
+		assert.Equal(t, uint(0x0A), message2.ConductorTime)
+		assert.Equal(t, uint(0x00), message2.ConductorData)
+
 	})
 }
 
