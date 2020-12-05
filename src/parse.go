@@ -71,10 +71,10 @@ func parseMetaEvent(bytes []byte, start uint, device byte, conductorTime uint, b
 		eventCode = PARSEC_TEMPO
 		conductorData = parseUint(bytes, start+3, start+5)
 
-		conductorMessage := initMessage(0, eventCode, nil, bundle.CumulativeTime+conductorTime-WARMUP_LENGTH, conductorData)
+		conductorMessage := initMessage(0, eventCode, nil, conductorTime, conductorData)
 
 		// Enqueue in conductor track
-		appendMessage(bundle.ConductorTrack, conductorMessage)
+		appendToConductor(conductorMessage, bundle)
 
 		// Update bundle
 		bundle.IgnoredTime = conductorTime

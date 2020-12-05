@@ -61,6 +61,14 @@ func initMessage(device byte, code byte, data []byte, conductorTime uint, conduc
 	return &message
 }
 
-func appendMessage(track *Track, message *ParsecMessage) {
+func appendMessage(message *ParsecMessage, track *Track, bundle *ParseBundle) {
 	*track = append(*track, *message)
+	bundle.CumulativeTime += message.ConductorTime
+}
+
+func appendToConductor(message *ParsecMessage, bundle *ParseBundle) {
+	deltaTime := message.ConductorTime
+	message.ConductorTime += bundle.CumulativeTime
+	*(bundle.ConductorTrack) = append(*(bundle.ConductorTrack), *message)
+	bundle.CumulativeTime += deltaTime
 }

@@ -83,7 +83,7 @@ func TestParseEvent(t *testing.T) {
 			Status:         0xFF,
 			PairStartIndex: 0,
 			IgnoredTime:    0,
-			CumulativeTime: (0x10 + WARMUP_LENGTH),
+			CumulativeTime: 0xF0,
 			ConductorTrack: &conductorTrack,
 		}
 
@@ -93,7 +93,7 @@ func TestParseEvent(t *testing.T) {
 		assert.Equal(t, false, bundle.IsRunningStatus)
 		assert.Equal(t, uint(len(bytes)), bundle.PairStartIndex)
 		assert.Equal(t, uint(0x0A), bundle.IgnoredTime)
-		assert.Equal(t, uint(0x10+WARMUP_LENGTH), bundle.CumulativeTime)
+		assert.Equal(t, uint(0xFA), bundle.CumulativeTime)
 		assert.NotNil(t, bundle.ConductorTrack)
 
 		assert.Nil(t, message)
@@ -101,7 +101,7 @@ func TestParseEvent(t *testing.T) {
 
 		cMessage := (*(bundle.ConductorTrack))[0]
 
-		assert.Equal(t, uint(0x1A), cMessage.ConductorTime)
+		assert.Equal(t, uint(0xFA), cMessage.ConductorTime)
 		assert.Equal(t, uint(0xC0FFEE), cMessage.ConductorData)
 		assert.Equal(t, uint8(PARSEC_FLAG), cMessage.MessageBytes[0])
 		assert.Equal(t, uint8(0), cMessage.MessageBytes[1])

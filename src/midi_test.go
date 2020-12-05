@@ -64,19 +64,29 @@ func TestInitMessage(t *testing.T) {
 func TestAppendMessage(t *testing.T) {
 	// Start with empty track
 
+	bundle := ParseBundle{
+		Status:         0x00,
+		PairStartIndex: 0,
+		IgnoredTime:    0,
+		CumulativeTime: 0,
+		ConductorTrack: nil,
+	}
+
 	var track Track
 	// dummy messages
-	message1 := initMessage(0, 0, nil, 0, 0)
-	message2 := initMessage(5, 5, nil, 0, 0)
+	message1 := initMessage(0, 0, nil, 10, 0)
+	message2 := initMessage(5, 5, nil, 15, 0)
 
-	appendMessage(&track, message1)
+	appendMessage(message1, &track, &bundle)
 
 	assert.NotNil(t, track)
 	assert.Equal(t, 1, len(track))
 	assert.Equal(t, *message1, track[0])
+	assert.Equal(t, uint(10), bundle.CumulativeTime)
 
-	appendMessage(&track, message2)
+	appendMessage(message2, &track, &bundle)
 
 	assert.Equal(t, 2, len(track))
 	assert.Equal(t, *message2, track[1])
+	assert.Equal(t, uint(25), bundle.CumulativeTime)
 }
