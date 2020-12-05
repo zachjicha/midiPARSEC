@@ -20,8 +20,13 @@ type ParseBundle struct {
 type midiParseFunction (func([]byte, uint, byte, uint, *ParseBundle) *ParsecMessage)
 
 var midiParseMap = map[byte]midiParseFunction{
-	MIDI_NOTE_OFF: parseMidiNoteOff,
-	MIDI_NOTE_ON:  parseMidiNoteOn,
+	MIDI_NOTE_OFF:    parseMidiNoteOff,
+	MIDI_NOTE_ON:     parseMidiNoteOn,
+	MIDI_MODE_FLAG:   parseIgnoredDouble,
+	MIDI_POLY_PRES:   parseIgnoredTriple,
+	MIDI_PROG_CHANGE: parseIgnoredDouble,
+	MIDI_KEY_PRES:    parseIgnoredDouble,
+	MIDI_PITCH_BEND:  parseIgnoredTriple,
 }
 
 func parseEvent(bytes []byte, start uint, device byte, bundle *ParseBundle) *ParsecMessage {
@@ -158,6 +163,18 @@ func parseMidiNoteOn(bytes []byte, start uint, device byte, conductorTime uint, 
 	bundle.IgnoredTime = 0
 
 	return initMessage(device, eventCode, eventData, conductorTime, 0)
+}
+
+func parseIgnoredDouble(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
+	bundle.PairStartIndex = 1 + start + runningStatusLength(bundle.IsRunningStatus)
+	bundle.IgnoredTime = conductorTime
+	return nil
+}
+
+func parseIgnoredTriple(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
+	bundle.PairStartIndex = 2 + start + runningStatusLength(bundle.IsRunningStatus)
+	bundle.IgnoredTime = conductorTime
+	return nil
 }
 
 func runningStatusLength(isRunningStatus bool) uint {
