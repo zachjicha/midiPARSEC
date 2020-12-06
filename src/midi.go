@@ -23,9 +23,9 @@ type Track []ParsecMessage
  * usecPerTick     - Microseconds per Midi Tick (clock division)
  * eventStartTimes - Tracks the start time of the events currently being executed
  */
-type Sequence struct {
+type MidiSequence struct {
 	Tracks          []Track
-	RemainingTracks uint8
+	RemainingTracks uint
 	ClockDivision   float64
 	UsecPerTick     float64
 	EventStartTimes []float64

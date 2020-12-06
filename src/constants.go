@@ -33,7 +33,24 @@ const (
 	PARSEC_TEMPO    byte = 0x00
 	PARSEC_NOTE_OFF byte = 0x00
 	PARSEC_NOTE_ON  byte = 0x00
+	PARSEC_NULL     byte = 0x00
 )
 
 // Warmup constants
-const WARMUP_LENGTH uint = 5750
+const (
+	WARMUP_NOTE       byte = 0x3C
+	WARMUP_TIME_ONE   uint = 0
+	WARMUP_TIME_TWO   uint = 0
+	WARMUP_TIME_THREE uint = 750
+	WARMUP_TIME_FOUR  uint = 5000
+	WARMUP_LENGTH     uint = WARMUP_TIME_ONE + WARMUP_TIME_TWO + WARMUP_TIME_THREE + WARMUP_TIME_FOUR
+)
+
+// Constants of positions in midi file
+const (
+	FILE_TRACKS_START      uint = 10
+	FILE_TRACKS_END        uint = 11
+	FILE_CLOCK_START       uint = 12
+	FILE_CLOCK_END         uint = 13
+	FILE_FIRST_TRACK_START uint = 14
+)

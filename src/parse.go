@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+)
 
 /*
  * Status          - Contains current status for running status
@@ -14,6 +17,7 @@ type ParseBundle struct {
 	PairStartIndex  uint
 	IgnoredTime     uint
 	CumulativeTime  uint
+	TrackStartIndex uint
 	ConductorTrack  *Track
 }
 
@@ -27,6 +31,91 @@ var midiParseMap = map[byte]midiParseFunction{
 	MIDI_PROG_CHANGE: parseIgnoredDouble,
 	MIDI_KEY_PRES:    parseIgnoredDouble,
 	MIDI_PITCH_BEND:  parseIgnoredTriple,
+}
+
+func parseSequence(file string) *MidiSequence {
+	bytes, err := ioutil.ReadFile(file)
+
+	if err != nil {
+		panic("Error opening midi file")
+	}
+
+	numTracks := parseUint(bytes, FILE_TRACKS_START, FILE_TRACKS_END)
+	clockDivision := parseUint(bytes, FILE_CLOCK_START, FILE_CLOCK_END)
+
+	sequence := MidiSequence{
+		Tracks:          make([]Track, 1),
+		RemainingTracks: numTracks,
+		ClockDivision:   float64(clockDivision),
+		UsecPerTick:     0,
+		EventStartTimes: make([]float64, numTracks+1),
+	}
+
+	bundle := ParseBundle{
+		Status:          0x00,
+		IsRunningStatus: false,
+		PairStartIndex:  0,
+		IgnoredTime:     0,
+		CumulativeTime:  0,
+		TrackStartIndex: FILE_FIRST_TRACK_START,
+		ConductorTrack:  &sequence.Tracks[0],
+	}
+
+	conductorWarmup := initMessage(0, PARSEC_NULL, nil, WARMUP_LENGTH, 0)
+
+	appendToConductor(conductorWarmup, &bundle)
+
+	for uint(len(sequence.Tracks)) <= numTracks {
+		if t := parseTrack(bytes, byte(len(sequence.Tracks)-1), &bundle); t != nil {
+			sequence.Tracks = append(sequence.Tracks, *t)
+		}
+	}
+
+	conductorEOT := initMessage(0, PARSEC_EOT, nil, 1, 0)
+
+	appendToConductor(conductorEOT, &bundle)
+
+	return &sequence
+
+}
+
+func parseTrack(bytes []byte, trackNum byte, bundle *ParseBundle) *Track {
+	// Make sure track chunk is valid
+
+	start := bundle.TrackStartIndex
+
+	if bytes[start] != 0x4D || bytes[start+1] != 0x54 || bytes[start+2] != 0x72 || bytes[start+3] != 0x6B {
+		bundle.TrackStartIndex += 8 + parseUint(bytes, start+4, start+7)
+		return nil
+	}
+
+	var track Track
+
+	warmupMessage1 := initMessage(trackNum, PARSEC_NULL, nil, WARMUP_TIME_ONE, 0)
+	warmupMessage2 := initMessage(trackNum, PARSEC_NOTE_ON, nil, WARMUP_TIME_TWO, 0)
+	warmupMessage3 := initMessage(trackNum, PARSEC_NOTE_OFF, []byte{WARMUP_NOTE}, WARMUP_TIME_THREE, 0)
+	warmupMessage4 := initMessage(trackNum, PARSEC_NULL, nil, WARMUP_TIME_FOUR, 0)
+
+	appendMessage(warmupMessage1, &track, bundle)
+	appendMessage(warmupMessage2, &track, bundle)
+	appendMessage(warmupMessage3, &track, bundle)
+	appendMessage(warmupMessage4, &track, bundle)
+
+	trackLength := parseUint(bytes, start+4, start+7)
+	bundle.PairStartIndex = start + 8
+	bundle.Status = 0x00
+	bundle.IsRunningStatus = false
+	bundle.IgnoredTime = 0
+	bundle.CumulativeTime = 0
+
+	for bundle.PairStartIndex < start+8+trackLength {
+		if m := parseEvent(bytes, bundle.PairStartIndex, trackNum, bundle); m != nil {
+			appendMessage(m, &track, bundle)
+		}
+	}
+
+	bundle.TrackStartIndex = bundle.PairStartIndex
+	return &track
 }
 
 func parseEvent(bytes []byte, start uint, device byte, bundle *ParseBundle) *ParsecMessage {
