@@ -94,7 +94,7 @@ func parseTrack(bytes []byte, trackNum byte, bundle *ParseBundle) *Track {
 	warmupMessage1 := initMessage(trackNum, PARSEC_NULL, nil, WARMUP_TIME_ONE, 0)
 	warmupMessage2 := initMessage(trackNum, PARSEC_NOTE_ON, nil, WARMUP_TIME_TWO, 0)
 	warmupMessage3 := initMessage(trackNum, PARSEC_NOTE_OFF, []byte{WARMUP_NOTE}, WARMUP_TIME_THREE, 0)
-	warmupMessage4 := initMessage(trackNum, PARSEC_NULL, nil, WARMUP_TIME_FOUR, 0)
+	warmupMessage4 := initMessage(trackNum, PARSEC_NOTE_OFF, nil, WARMUP_TIME_FOUR, 0)
 
 	appendMessage(warmupMessage1, &track, bundle)
 	appendMessage(warmupMessage2, &track, bundle)
