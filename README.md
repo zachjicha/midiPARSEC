@@ -2,7 +2,7 @@
 
 ## TODO
 
-* Test meta event parser through parseEvent()
+* Do comms with arduino
 
 midi PARser and Serial Encoding Client 
 
