@@ -72,3 +72,30 @@ func appendToConductor(message *ParsecMessage, bundle *ParseBundle) {
 	*(bundle.ConductorTrack) = append(*(bundle.ConductorTrack), *message)
 	bundle.CumulativeTime += deltaTime
 }
+
+func formatMessage(m *ParsecMessage, numTracks uint, numMotors uint) []byte {
+	if m.MessageBytes[1] == 0xFF {
+		return m.MessageBytes
+	}
+
+	if numMotors%2 == 1 {
+		offset := byte((numMotors - numTracks) / 2)
+
+		if numTracks%2 == 1 {
+			m.MessageBytes[1] += offset
+		} else {
+			if uint(m.MessageBytes[1]) <= numTracks/2 {
+				m.MessageBytes[1] += offset
+			} else {
+				m.MessageBytes[1] += offset + 1
+			}
+		}
+	} else {
+		offset := byte((numMotors - numTracks) / 2)
+		if numTracks%2 == 0 {
+			m.MessageBytes[1] += offset
+		}
+	}
+
+	return m.MessageBytes
+}

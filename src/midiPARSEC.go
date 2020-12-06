@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -11,7 +10,13 @@ func main() {
 	}
 
 	midiFile := os.Args[1]
+	port := os.Args[2]
 
 	sequence := parseSequence(midiFile)
-	fmt.Printf("%v\n", sequence)
+
+	arduino := openPort(port)
+
+	sbegin := initMessage(PARSEC_BROADCAST, PARSEC_SEQ_BEGIN, nil, 0, 0)
+
+	arduino.SendMessage(sbegin)
 }

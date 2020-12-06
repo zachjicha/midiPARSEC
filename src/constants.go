@@ -28,12 +28,18 @@ const (
 
 // Values from the PARSEC message protocol)
 const (
-	PARSEC_FLAG     byte = 0xAE
-	PARSEC_EOT      byte = 0x00
-	PARSEC_TEMPO    byte = 0x00
-	PARSEC_NOTE_OFF byte = 0x00
-	PARSEC_NOTE_ON  byte = 0x00
-	PARSEC_NULL     byte = 0x00
+	PARSEC_FLAG      byte = 0xAE
+	PARSEC_RESPONSE  byte = 0x26
+	PARSEC_BROADCAST byte = 0xFF
+	PARSEC_EOT       byte = 0xCF
+	PARSEC_TEMPO     byte = 0xC1
+	PARSEC_NOTE_OFF  byte = 0xA1
+	PARSEC_NOTE_ON   byte = 0xA2
+	PARSEC_NULL      byte = 0xC0
+	PARSEC_IDLE      byte = 0xA1
+	PARSEC_STANDBY   byte = 0xA2
+	PARSEC_SEQ_BEGIN byte = 0xB0
+	PARSEC_SEQ_END   byte = 0xE0
 )
 
 // Warmup constants
