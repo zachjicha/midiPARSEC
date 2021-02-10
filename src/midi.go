@@ -49,8 +49,8 @@ func initMessage(device byte, code byte, data []byte, conductorTime uint, conduc
 	message.MessageBytes = make([]byte, 0)
 	message.MessageBytes = append(message.MessageBytes, PARSEC_FLAG)
 	message.MessageBytes = append(message.MessageBytes, device)
-	message.MessageBytes = append(message.MessageBytes, code)
 	message.MessageBytes = append(message.MessageBytes, messageLength)
+	message.MessageBytes = append(message.MessageBytes, code)
 
 	if messageLength > 0 {
 		for _, val := range data {

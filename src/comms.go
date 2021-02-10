@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"time"
 
@@ -25,21 +26,39 @@ func openPort(name string) *Arduino {
 		panic("Error opening port")
 	}
 
+	fmt.Println("Waiting for arduino to restart...")
 	time.Sleep(time.Second)
 
-	var buf = make([]byte, 2)
-	totalBytes := 0
+	serialPort.Write([]byte{0x90})
 
-	for totalBytes < 2 {
-		if n, err := serialPort.Read(buf); err != nil && buf[0] == PARSEC_RESPONSE {
-			totalBytes += n
+	var buf = make([]byte, 2)
+	bytesRead := 0
+
+	for bytesRead < 2 {
+		if n, err := serialPort.Read(buf); err != nil {
+			panic("Error receiving data")
+		} else {
+			bytesRead += n
 		}
 	}
 
+	var numMotors byte
+	if buf[0] != 0x26 {
+		numMotors = buf[0]
+	} else {
+		numMotors = buf[1]
+	}
+
+	fmt.Printf("Connection established to arduino with %d motors\n", numMotors)
+
 	return &Arduino{
 		Port:   &serialPort,
-		Motors: uint(buf[1]),
+		Motors: uint(numMotors),
 	}
+}
+
+func (a *Arduino) ClosePort() {
+	(*a.Port).Close()
 }
 
 func (a *Arduino) SendMessage(m *ParsecMessage) {
