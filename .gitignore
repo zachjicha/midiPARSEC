@@ -348,11 +348,5 @@ MigrationBackup/
 *.mid
 
 #Ignore vscode files
-/midiPARSEC/.vscode/*
+.vscode/*
 *.code-workspace
-
-#Ignore my reminder file
-compile.txt
-
-#Ignore exe
-*.exe
