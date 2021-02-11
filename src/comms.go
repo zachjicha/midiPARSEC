@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/huin/goserial"
@@ -34,9 +35,12 @@ func openPort(name string) *Arduino {
 	time.Sleep(time.Second)
 
 	// Write query byte to arduino to start handshake
-	serialPort.Write([]byte{PARSEC_QUERY})
+	if _, err := serialPort.Write([]byte{PARSEC_QUERY}); err != nil {
+		//Fatal error if writes fail
+		log.Fatal(err)
+	}
 
-	// We will (usually) receive two bytes from arduino in repsonse
+	// We will (usually) receive two bytes from arduino in response
 	var buf = make([]byte, 2)
 	bytesRead := 0
 
@@ -50,7 +54,7 @@ func openPort(name string) *Arduino {
 	}
 
 	var numMotors byte
-	// Sometimes the response byte is lost, this accounts for that since it doesn't carry improtant info
+	// Sometimes the response byte is lost, this accounts for that since it doesn't carry important info
 	if buf[0] != PARSEC_RESPONSE {
 		numMotors = buf[0]
 	} else {
@@ -67,11 +71,17 @@ func openPort(name string) *Arduino {
 
 // Close arduino's port
 func (a *Arduino) ClosePort() {
-	(*a.Port).Close()
+	if err := (*a.Port).Close(); err != nil {
+		// non-Fatal error, just it
+		log.Println(err)
+	}
 }
 
 // Send a parsec message to the arduino
 func (a *Arduino) SendMessage(m *ParsecMessage, tracks uint) {
 	// Subtract one to ignore conductor track
-	(*a.Port).Write(formatMessage(m, tracks-1, a.Motors))
+	if _, err := (*a.Port).Write(formatMessage(m, tracks-1, a.Motors)); err != nil {
+		//Fatal error if writes fail
+		log.Fatal(err)
+	}
 }
