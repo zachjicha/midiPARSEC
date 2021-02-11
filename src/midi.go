@@ -94,10 +94,10 @@ func appendMessage(message *ParsecMessage, track *Track, bundle *ParseBundle) {
 
 // Append a message to the conductor track
 func appendToConductor(message *ParsecMessage, bundle *ParseBundle) {
-	deltaTime := message.ConductorTime
 	message.ConductorTime += bundle.CumulativeTime
 	*(bundle.ConductorTrack) = append(*(bundle.ConductorTrack), *message)
-	bundle.CumulativeTime += deltaTime
+	// Reset cumulative time after conductor event
+	bundle.CumulativeTime = 0
 }
 
 // Format a message for sending to the arduino

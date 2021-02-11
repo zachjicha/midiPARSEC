@@ -18,7 +18,7 @@ func main() {
 	midiFile := os.Args[1]
 	port := os.Args[2]
 
-	// Parse midi file and open serila port to arduino
+	// Parse midi file and open serial port to arduino
 	sequence := parseSequence(midiFile)
 	arduino := openPort(port)
 

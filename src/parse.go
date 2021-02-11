@@ -9,7 +9,7 @@ import (
  * Status          - Contains current status for running status
  * IsRunningStatus - True if running status is in effect
  * IgnoredTime     - Time from events since last non-ignored event that were ignored
- * CumulativeTime  - Total time so far in the track, used for conductor events
+ * CumulativeTime  - Total time since last conductor event
  */
 type ParseBundle struct {
 	Status          byte
