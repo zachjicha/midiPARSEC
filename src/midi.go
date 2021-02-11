@@ -164,7 +164,7 @@ func (s MidiSequence) Play(a *Arduino) {
 }
 
 func (s MidiSequence) CheckEvents(currentTime int64, a *Arduino, pb *PlaybackBundle) {
-	for currTrack, _ := range pb.RemainingTracks {
+	for currTrack := range pb.RemainingTracks {
 		track := *(s.Tracks[currTrack])
 		trackEvent := track[pb.CurrentEvents[currTrack]]
 		eventStart := pb.StartTimes[currTrack]
