@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -46,7 +47,10 @@ func main() {
 
 	// Wait for user to continue
 	fmt.Println("Press enter to play")
-	bufio.NewReader(os.Stdin).ReadBytes('\n')
+	if _, err := bufio.NewReader(os.Stdin).ReadBytes('\n'); err != nil {
+		// This error is fatal since we cannot play without keypress
+		log.Fatal("Failed to record key press on Enter")
+	}
 
 	// Motors standby and begin sequence playback
 	arduino.SendMessage(standby, sequence.NumTracks)
