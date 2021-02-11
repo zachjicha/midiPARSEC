@@ -8,7 +8,9 @@ midi PARser and Serial Encoding Client
 
 Successor to the mechO project. This parses a midi file and plays it on stepper motors connected to an arduino via serial.
 
-For instructions on setting up and running the code, head over to the [installation and setup](https://github.com/zachjicha13/midiPARSEC/wiki/Installation-and-Setup) wiki page
+To run the code: `midiPARSEC <midi file> <usb port>`
+
+You may need to add youreself to the group that controls the usb port or run as sudo for the program to be able to open the port. 
 
 Visit the wiki for more information.
 
