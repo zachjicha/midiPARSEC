@@ -69,9 +69,9 @@ func TestParseEvent(t *testing.T) {
 		assert.NotNil(t, message)
 		assert.Equal(t, uint(0), message.ConductorTime)
 		assert.Equal(t, uint(0), message.ConductorData)
-		assert.Equal(t, uint8(PARSEC_FLAG), message.MessageBytes[0])
+		assert.Equal(t, PARSEC_FLAG, message.MessageBytes[0])
 		assert.Equal(t, uint8(3), message.MessageBytes[1])
-		assert.Equal(t, uint8(PARSEC_EOT), message.MessageBytes[2])
+		assert.Equal(t, PARSEC_EOT, message.MessageBytes[2])
 		assert.Equal(t, uint8(0), message.MessageBytes[3])
 
 	})
@@ -103,9 +103,9 @@ func TestParseEvent(t *testing.T) {
 
 		assert.Equal(t, uint(0xFA), cMessage.ConductorTime)
 		assert.Equal(t, uint(0xC0FFEE), cMessage.ConductorData)
-		assert.Equal(t, uint8(PARSEC_FLAG), cMessage.MessageBytes[0])
+		assert.Equal(t, PARSEC_FLAG, cMessage.MessageBytes[0])
 		assert.Equal(t, uint8(0), cMessage.MessageBytes[1])
-		assert.Equal(t, uint8(PARSEC_TEMPO), cMessage.MessageBytes[2])
+		assert.Equal(t, PARSEC_TEMPO, cMessage.MessageBytes[2])
 		assert.Equal(t, uint8(0), cMessage.MessageBytes[3])
 
 	})
@@ -222,9 +222,9 @@ func TestParseUint(t *testing.T) {
 
 		var bytes []byte
 
-		for copy := randNum; copy > 0; {
-			bytes = append([]byte{byte(copy & 0xFF)}, bytes...)
-			copy = copy >> 8
+		for randCopy := randNum; randCopy > 0; {
+			bytes = append([]byte{byte(randCopy & 0xFF)}, bytes...)
+			randCopy = randCopy >> 8
 		}
 
 		result := parseUint(bytes, 0, uint(len(bytes)-1))
