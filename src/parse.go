@@ -21,7 +21,7 @@ type ParseBundle struct {
 	ConductorTrack  *Track
 }
 
-type midiParseFunction (func([]byte, uint, byte, uint, *ParseBundle) *ParsecMessage)
+type midiParseFunction func([]byte, uint, byte, uint, *ParseBundle) *ParsecMessage
 
 var midiParseMap = map[byte]midiParseFunction{
 	MIDI_NOTE_OFF:    parseMidiNoteOff,
@@ -127,9 +127,9 @@ func parseEvent(bytes []byte, start uint, device byte, bundle *ParseBundle) *Par
 	var message *ParsecMessage
 
 	numBytes, value := parseVarival(bytes, start)
-	conductorTime := uint(value) + bundle.IgnoredTime
+	conductorTime := value + bundle.IgnoredTime
 
-	eventStartIndex := start + uint(numBytes)
+	eventStartIndex := start + numBytes
 
 	switch bytes[eventStartIndex] {
 	case TYPE_META:
