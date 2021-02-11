@@ -15,13 +15,13 @@ func TestInitMessage(t *testing.T) {
 
 		device := byte(rand.Intn(15))
 		code := byte(rand.Intn(15))
-		time := uint(rand.Intn(4096))
-		data := uint(rand.Intn(4096))
+		cTime := uint(rand.Intn(4096))
+		cData := uint(rand.Intn(4096))
 
-		result := initMessage(device, code, nil, time, data)
+		result := initMessage(device, code, nil, cTime, cData)
 
-		assert.Equal(t, time, result.ConductorTime)
-		assert.Equal(t, data, result.ConductorData)
+		assert.Equal(t, cTime, result.ConductorTime)
+		assert.Equal(t, cData, result.ConductorData)
 
 		assert.Equal(t, 4, len(result.MessageBytes))
 		assert.Equal(t, PARSEC_FLAG, result.MessageBytes[0])
