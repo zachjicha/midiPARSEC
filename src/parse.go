@@ -27,10 +27,10 @@ var midiParseMap = map[byte]midiParseFunction{
 	MIDI_NOTE_OFF:    parseMidiNoteOff,
 	MIDI_NOTE_ON:     parseMidiNoteOn,
 	MIDI_MODE_FLAG:   parseIgnoredDouble,
-	MIDI_POLY_PRES:   parseIgnoredTriple,
-	MIDI_PROG_CHANGE: parseIgnoredDouble,
-	MIDI_KEY_PRES:    parseIgnoredDouble,
-	MIDI_PITCH_BEND:  parseIgnoredTriple,
+	MIDI_POLY_PRES:   parseIgnoredDouble,
+	MIDI_PROG_CHANGE: parseIgnoredSingle,
+	MIDI_KEY_PRES:    parseIgnoredSingle,
+	MIDI_PITCH_BEND:  parseIgnoredDouble,
 }
 
 func parseSequence(file string) *MidiSequence {
@@ -43,11 +43,15 @@ func parseSequence(file string) *MidiSequence {
 	numTracks := parseUint(bytes, FILE_TRACKS_START, FILE_TRACKS_END)
 	clockDivision := parseUint(bytes, FILE_CLOCK_START, FILE_CLOCK_END)
 
+	tracks := make([]*Track, 1)
+	cTrack := make(Track, 0)
+	tracks[0] = &cTrack
+
 	sequence := MidiSequence{
-		Tracks:          make([]Track, 1),
-		RemainingTracks: numTracks,
+		Tracks: tracks,
+		// Plus 1 for conductor track
+		NumTracks:       numTracks + 1,
 		ClockDivision:   float64(clockDivision),
-		UsecPerTick:     0,
 		EventStartTimes: make([]float64, numTracks+1),
 	}
 
@@ -58,7 +62,7 @@ func parseSequence(file string) *MidiSequence {
 		IgnoredTime:     0,
 		CumulativeTime:  0,
 		TrackStartIndex: FILE_FIRST_TRACK_START,
-		ConductorTrack:  &sequence.Tracks[0],
+		ConductorTrack:  sequence.Tracks[0],
 	}
 
 	conductorWarmup := initMessage(0, PARSEC_NULL, nil, WARMUP_LENGTH, 0)
@@ -67,7 +71,7 @@ func parseSequence(file string) *MidiSequence {
 
 	for uint(len(sequence.Tracks)) <= numTracks {
 		if t := parseTrack(bytes, byte(len(sequence.Tracks)-1), &bundle); t != nil {
-			sequence.Tracks = append(sequence.Tracks, *t)
+			sequence.Tracks = append(sequence.Tracks, t)
 		}
 	}
 
@@ -92,8 +96,8 @@ func parseTrack(bytes []byte, trackNum byte, bundle *ParseBundle) *Track {
 	var track Track
 
 	warmupMessage1 := initMessage(trackNum, PARSEC_NULL, nil, WARMUP_TIME_ONE, 0)
-	warmupMessage2 := initMessage(trackNum, PARSEC_NOTE_ON, nil, WARMUP_TIME_TWO, 0)
-	warmupMessage3 := initMessage(trackNum, PARSEC_NOTE_OFF, []byte{WARMUP_NOTE}, WARMUP_TIME_THREE, 0)
+	warmupMessage2 := initMessage(trackNum, PARSEC_NOTE_ON, []byte{WARMUP_NOTE}, WARMUP_TIME_TWO, 0)
+	warmupMessage3 := initMessage(trackNum, PARSEC_NOTE_OFF, nil, WARMUP_TIME_THREE, 0)
 	warmupMessage4 := initMessage(trackNum, PARSEC_NOTE_OFF, nil, WARMUP_TIME_FOUR, 0)
 
 	appendMessage(warmupMessage1, &track, bundle)
@@ -233,8 +237,7 @@ func parseMidiNoteOff(bytes []byte, start uint, device byte, conductorTime uint,
 }
 
 func parseMidiNoteOn(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
-
-	velocity := bytes[start+2+runningStatusLength(bundle.IsRunningStatus)]
+	velocity := bytes[start+1+runningStatusLength(bundle.IsRunningStatus)]
 	var eventCode byte
 	var eventData []byte = nil
 
@@ -254,13 +257,13 @@ func parseMidiNoteOn(bytes []byte, start uint, device byte, conductorTime uint, 
 	return initMessage(device, eventCode, eventData, conductorTime, 0)
 }
 
-func parseIgnoredDouble(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
+func parseIgnoredSingle(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
 	bundle.PairStartIndex = 1 + start + runningStatusLength(bundle.IsRunningStatus)
 	bundle.IgnoredTime = conductorTime
 	return nil
 }
 
-func parseIgnoredTriple(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
+func parseIgnoredDouble(bytes []byte, start uint, device byte, conductorTime uint, bundle *ParseBundle) *ParsecMessage {
 	bundle.PairStartIndex = 2 + start + runningStatusLength(bundle.IsRunningStatus)
 	bundle.IgnoredTime = conductorTime
 	return nil

@@ -1,5 +1,7 @@
 package main
 
+const MICROS_PER_NANO int64 = 1000
+
 // Event Type bytes
 const (
 	TYPE_META      byte = 0xFF
@@ -29,6 +31,7 @@ const (
 // Values from the PARSEC message protocol)
 const (
 	PARSEC_FLAG      byte = 0xAE
+	PARSEC_QUERY     byte = 0x90
 	PARSEC_RESPONSE  byte = 0x26
 	PARSEC_BROADCAST byte = 0xFF
 	PARSEC_EOT       byte = 0xCF
@@ -59,4 +62,11 @@ const (
 	FILE_CLOCK_START       uint = 12
 	FILE_CLOCK_END         uint = 13
 	FILE_FIRST_TRACK_START uint = 14
+)
+
+// Constants for byte positions
+const (
+	DEVICE_BYTE = 1
+	LENGTH_BYTE = 2
+	CODE_BYTE   = 3
 )

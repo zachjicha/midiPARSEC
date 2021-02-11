@@ -2,7 +2,7 @@
 
 ## TODO
 
-* Do comms with arduino
+* Fix parsec message formatting, fix so that both ends recognize addresses starting from 0
 
 midi PARser and Serial Encoding Client 
 
