@@ -1,9 +1,5 @@
 # midiPARSEC
 
-## TODO
-
-* Fix parsec message formatting, fix so that both ends recognize addresses starting from 0
-
 midi PARser and Serial Encoding Client 
 
 Successor to the mechO project. This parses a midi file and plays it on stepper motors connected to an arduino via serial.
