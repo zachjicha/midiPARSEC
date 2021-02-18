@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 )
 
 /*
@@ -37,7 +38,7 @@ func parseSequence(file string) *MidiSequence {
 	bytes, err := ioutil.ReadFile(file)
 
 	if err != nil {
-		panic("Error opening midi file")
+		log.Fatal(err)
 	}
 
 	numTracks := parseUint(bytes, FILE_TRACKS_START, FILE_TRACKS_END)
