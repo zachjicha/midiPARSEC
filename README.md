@@ -10,6 +10,6 @@ You may need to add youreself to the group that controls the usb port or run as 
 
 The code to run on the arduino can be found [here](https://github.com/zachjicha/arduinoPARSEC)
 
-Visit the wiki for more information.
+Visit the wiki or read the design doc for more information.
 
 Here are examples of the code running: [https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL](https://www.youtube.com/playlist?list=PLbPiQ47Dr7Op534CLelWmbHnO8Y7hcMiL)
